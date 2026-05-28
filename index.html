@@ -1,0 +1,1151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>InvestEngine - English Learning Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  :root {
+    --bg: #F7F5F0; --surface: #FFFFFF;
+    --ink: #1A1814; --ink-soft: #6B6760; --ink-muted: #A8A49F;
+    --accent: #2D5BE3; --accent-soft: #EEF2FD;
+    --gold: #C9922A; --gold-soft: #FBF4E8; --gold-bright-soft: #FEF3CD;
+    --green: #1E7F5E; --green-soft: #E8F5F1;
+    --red: #C0392B; --red-soft: #FDECEA;
+    --purple: #5B2C8A; --purple-soft: #F3EDF7;
+    --border: #E8E4DE; --radius: 12px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--ink); min-height: 100vh; font-size: 14px; line-height: 1.6; }
+
+  .report-header { background: var(--ink); color: white; padding: 28px 48px; display: flex; justify-content: space-between; align-items: flex-end; gap: 24px; flex-wrap: wrap; }
+  .brand-bar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 14px 48px; display: flex; align-items: center; }
+  .brand-mark { display: inline-flex; align-items: center; text-decoration: none; line-height: 0; transition: opacity 0.15s; }
+  .brand-mark:hover { opacity: 0.75; }
+  .brand-mark svg { display: block; height: 22px; width: auto; }
+
+  /* TAB NAV */
+  .tab-nav { background: var(--surface); border-bottom: 1px solid var(--border); }
+  .tab-nav-inner { max-width: 1180px; margin: 0 auto; padding: 0 32px; display: flex; gap: 4px; }
+  .tab-btn {
+    padding: 14px 18px;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--ink-soft);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    margin-bottom: -1px;
+  }
+  .tab-btn:hover { color: var(--ink); }
+  .tab-btn.active { color: var(--ink); border-bottom-color: var(--accent); font-weight: 600; }
+
+  /* MONEY VIEW SPECIFIC */
+  .money-view { display: none; }
+  .money-view.active { display: block; }
+  .money-table tbody td.num-cell { font-variant-numeric: tabular-nums; font-weight: 500; }
+  .cost-split-bar { display: flex; height: 10px; border-radius: 99px; overflow: hidden; background: var(--bg); margin: 16px 0 12px; }
+  .cost-split-bar .seg { height: 100%; }
+  .cost-split-bar .seg.ind { background: var(--accent); }
+  .cost-split-bar .seg.grp { background: var(--purple); }
+  .cost-split-legend { display: flex; gap: 18px; flex-wrap: wrap; font-size: 12px; color: var(--ink-soft); }
+  .cost-split-legend .swatch { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: middle; }
+  .cost-split-legend .swatch.ind { background: var(--accent); }
+  .cost-split-legend .swatch.grp { background: var(--purple); }
+  .cost-split-legend strong { color: var(--ink); font-weight: 600; }
+  .money-disclaimer { font-size: 11px; color: var(--ink-muted); font-style: italic; margin-top: 6px; }
+  .company-label { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(255,255,255,0.45); margin-bottom: 6px; }
+  .report-title { font-family: 'DM Serif Display', serif; font-size: 30px; line-height: 1.1; color: white; margin-bottom: 6px; }
+  .report-subtitle { font-size: 13px; color: rgba(255,255,255,0.55); }
+  .header-meta { text-align: right; flex-shrink: 0; }
+  .meta-item { font-size: 12px; color: rgba(255,255,255,0.45); line-height: 1.8; }
+  .meta-item strong { color: rgba(255,255,255,0.85); font-weight: 500; }
+  .powered-by { margin-top: 10px; font-size: 11px; color: rgba(255,255,255,0.25); letter-spacing: 0.06em; }
+
+  .main { max-width: 1180px; margin: 0 auto; padding: 32px 32px 60px; }
+  .section-label { font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-muted); margin-bottom: 16px; display: flex; align-items: center; gap: 10px; }
+  .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  .summary-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+  .stat-card { background: var(--surface); border-radius: var(--radius); padding: 22px 20px; border: 1px solid var(--border); }
+  .stat-card.accent { background: var(--ink); border-color: var(--ink); }
+  .stat-label { font-size: 11px; color: var(--ink-muted); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 8px; }
+  .stat-card.accent .stat-label { color: rgba(255,255,255,0.4); }
+  .stat-value { font-family: 'DM Serif Display', serif; font-size: 32px; line-height: 1; color: var(--ink); margin-bottom: 4px; }
+  .stat-card.accent .stat-value { color: white; }
+  .stat-note { font-size: 12px; color: var(--ink-soft); }
+  .stat-card.accent .stat-note { color: rgba(255,255,255,0.5); }
+  .stat-card.warn .stat-value { color: var(--red); }
+
+  /* CEFR distribution */
+  .cefr-card { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); padding: 22px 24px; margin-bottom: 32px; }
+  .cefr-card-title { font-size: 13px; font-weight: 600; color: var(--ink); margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; }
+  .cefr-card-sub { font-size: 11px; color: var(--ink-muted); letter-spacing: 0.06em; text-transform: uppercase; }
+  .cefr-stack { display: flex; height: 14px; border-radius: 99px; overflow: hidden; background: var(--bg); }
+  .cefr-seg { height: 100%; transition: flex 0.5s ease; }
+  .cefr-legend { display: flex; flex-wrap: wrap; gap: 12px 18px; margin-top: 12px; }
+  .cefr-legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--ink-soft); }
+  .cefr-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+  .table-wrap { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); overflow: hidden; margin-bottom: 24px; }
+  .table-controls { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--border); gap: 12px; flex-wrap: wrap; }
+  .controls-left { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  .controls-right { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  .search-input { border: 1px solid var(--border); border-radius: 8px; padding: 7px 12px; font-size: 13px; font-family: 'DM Sans', sans-serif; color: var(--ink); background: var(--bg); outline: none; width: 220px; }
+  .search-input:focus { border-color: var(--accent); }
+  .filter-group { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+  .filter-label { font-size: 11px; color: var(--ink-muted); letter-spacing: 0.08em; text-transform: uppercase; margin-right: 4px; }
+  .filter-tab { padding: 5px 12px; border-radius: 99px; font-size: 12px; font-family: 'DM Sans', sans-serif; cursor: pointer; border: 1px solid var(--border); background: transparent; color: var(--ink-soft); transition: all 0.15s; }
+  .filter-tab.active, .filter-tab:hover { background: var(--ink); color: white; border-color: var(--ink); }
+  .reset-btn { padding: 5px 12px; border-radius: 99px; font-size: 12px; font-family: 'DM Sans', sans-serif; cursor: pointer; border: 1px solid var(--border); background: transparent; color: var(--ink-soft); transition: all 0.15s; }
+  .reset-btn:hover { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
+
+  table { width: 100%; border-collapse: collapse; }
+  thead th { padding: 12px 16px; text-align: left; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-muted); border-bottom: 1px solid var(--border); background: var(--bg); font-weight: 500; cursor: pointer; white-space: nowrap; user-select: none; }
+  thead th:hover { color: var(--ink); }
+  thead th .sort-arrow { display: inline-block; margin-left: 4px; font-size: 10px; color: var(--ink-muted); opacity: 0; transition: opacity 0.15s; }
+  thead th.sorted .sort-arrow { opacity: 1; color: var(--accent); }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; cursor: pointer; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: #FAFAF8; }
+  tbody td { padding: 14px 16px; font-size: 13px; color: var(--ink); vertical-align: middle; }
+  .employee-name { font-weight: 500; color: var(--ink); }
+  .employee-sub { font-size: 11px; color: var(--ink-muted); margin-top: 2px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+  .employee-status-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--green); margin-right: 6px; vertical-align: middle; }
+  .employee-status-dot.paused { background: var(--ink-muted); }
+  tbody tr.is-paused .employee-name { color: var(--ink-soft); text-decoration: line-through; text-decoration-color: var(--ink-muted); }
+  .group-pill { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 99px; font-size: 10px; font-weight: 600; background: var(--purple-soft); color: var(--purple); letter-spacing: 0.04em; text-transform: uppercase; }
+  .midterm-pill { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 99px; font-size: 10px; font-weight: 600; background: var(--green-soft); color: var(--green); letter-spacing: 0.04em; text-transform: uppercase; }
+  .midterm-pill .check { font-size: 11px; line-height: 1; }
+  .midterm-pill .pct { color: var(--green); font-weight: 700; letter-spacing: 0; text-transform: none; }
+
+  .level-badge { display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 5px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+  .lvl-A1, .lvl-A2 { background: var(--red-soft); color: var(--red); }
+  .lvl-B1 { background: var(--gold-bright-soft); color: #7A5800; }
+  .lvl-B2 { background: var(--gold-soft); color: #8A5F10; }
+  .lvl-C1 { background: var(--green-soft); color: #1E5C45; }
+  .lvl-C2 { background: var(--accent-soft); color: #1A3A9E; }
+
+  .pct-cell { display: flex; align-items: center; gap: 8px; }
+  .pct-bar { width: 60px; height: 6px; background: var(--bg); border-radius: 99px; overflow: hidden; }
+  .pct-fill { height: 100%; background: var(--accent); border-radius: 99px; transition: width 0.6s ease; }
+  .num-mono { font-variant-numeric: tabular-nums; }
+  .ink-soft { color: var(--ink-soft); }
+  .shown-count { font-size: 12px; color: var(--ink-muted); }
+  .pace-cell .pace-val { font-weight: 600; }
+  .pace-cell.at-risk { color: var(--red); }
+  .pace-cell.healthy { color: var(--green); }
+  .pace-cell.dash { color: var(--ink-muted); }
+  .pace-forecast { font-size: 10px; color: var(--ink-muted); display: block; margin-top: 2px; }
+
+  .detail-view { display: none; }
+  .detail-view.active { display: block; }
+  .list-view.hidden { display: none; }
+  .back-button { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--ink-soft); font-family: 'DM Sans', sans-serif; font-size: 13px; cursor: pointer; margin-bottom: 24px; transition: all 0.15s; }
+  .back-button:hover { background: var(--ink); color: white; border-color: var(--ink); }
+  .detail-hero { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px; margin-bottom: 24px; display: grid; grid-template-columns: 1fr auto; gap: 24px; align-items: start; }
+  .detail-hero h1 { font-family: 'DM Serif Display', serif; font-size: 28px; line-height: 1.2; color: var(--ink); margin-bottom: 4px; }
+  .detail-hero .sub { font-size: 13px; color: var(--ink-soft); margin-bottom: 16px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .detail-meta-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px 32px; }
+  .meta-block .meta-block-label { font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-muted); margin-bottom: 4px; }
+  .meta-block .meta-block-value { font-size: 14px; color: var(--ink); white-space: pre-wrap; }
+  .meta-block .meta-block-value .approx-tag, .meta-block .meta-block-value .muted-tag { font-size: 11px; color: var(--ink-muted); font-style: italic; margin-left: 6px; }
+  .detail-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; margin-bottom: 20px; }
+  .detail-card h2 { font-size: 13px; font-weight: 600; color: var(--ink); margin-bottom: 16px; letter-spacing: 0.02em; }
+  .chart-wrap { height: 280px; position: relative; }
+  .chart-empty { display: flex; justify-content: center; align-items: center; height: 200px; color: var(--ink-muted); font-size: 13px; }
+
+  .midterm-status { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+  .status-badge { display: inline-flex; align-items: center; padding: 6px 14px; border-radius: 99px; font-size: 13px; font-weight: 600; }
+  .status-badge.completed { background: var(--green-soft); color: var(--green); }
+  .status-badge.not-taken { background: var(--bg); color: var(--ink-muted); border: 1px solid var(--border); }
+  .status-badge.history { background: var(--purple-soft); color: var(--purple); }
+  .toggle-button { padding: 7px 14px; border-radius: 8px; border: 1px solid var(--accent); background: var(--accent); color: white; font-family: 'DM Sans', sans-serif; font-size: 12px; cursor: pointer; transition: all 0.15s; }
+  .toggle-button:hover { background: #1f47c2; border-color: #1f47c2; }
+  .toggle-button.secondary { background: transparent; color: var(--accent); }
+  .toggle-button.secondary:hover { background: var(--accent-soft); }
+  .midterm-details { display: none; margin-top: 16px; padding-top: 20px; border-top: 1px solid var(--border); }
+  .midterm-details.open { display: block; }
+  .midterm-section { margin-bottom: 18px; }
+  .midterm-section:last-child { margin-bottom: 0; }
+  .midterm-section-title { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); font-weight: 600; margin-bottom: 6px; }
+  .midterm-section-text { font-size: 13px; color: var(--ink); line-height: 1.7; white-space: pre-wrap; }
+  .midterm-not-taken-note { font-size: 13px; color: var(--ink-soft); line-height: 1.7; }
+
+  .skill-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px 28px; margin-bottom: 16px; }
+  .skill-row { display: flex; flex-direction: column; gap: 6px; }
+  .skill-row-head { display: flex; justify-content: space-between; align-items: baseline; }
+  .skill-row-label { font-size: 12px; color: var(--ink-soft); }
+  .skill-row-value { font-size: 12px; font-weight: 600; color: var(--ink); }
+  .skill-track { height: 6px; background: var(--bg); border-radius: 99px; overflow: hidden; }
+  .skill-fill { height: 100%; border-radius: 99px; background: var(--accent); transition: width 0.8s ease; }
+  .skill-fill.s2 { background: var(--green); }
+  .skill-fill.s3 { background: var(--gold); }
+  .skill-fill.s4 { background: #8B44C8; }
+  .skill-fill.s5 { background: #C0392B; }
+  .skill-fill.s6 { background: #1E7F5E; }
+  .skill-fill.history { background: var(--purple); }
+
+  .badge-pair { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
+  .small-stat { background: var(--bg); border-radius: 8px; padding: 10px 14px; min-width: 140px; }
+  .small-stat .label { font-size: 10px; color: var(--ink-muted); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 4px; }
+  .small-stat .value { font-size: 16px; font-weight: 600; color: var(--ink); font-family: 'DM Serif Display', serif; }
+  .small-stat .value .of { font-size: 11px; color: var(--ink-muted); font-family: 'DM Sans'; font-weight: 400; }
+
+  .history-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
+  .history-meta-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px 28px; padding: 12px 0; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
+  .history-meta { font-size: 12px; }
+  .history-meta .lbl { color: var(--ink-muted); letter-spacing: 0.08em; text-transform: uppercase; font-size: 10px; margin-bottom: 2px; }
+
+  .typo-footnote { font-size: 11px; color: var(--ink-muted); font-style: italic; margin-top: 8px; }
+
+  .will-complete-block { background: var(--accent-soft); border-radius: 8px; padding: 12px 16px; margin-top: 14px; display: flex; gap: 10px; align-items: flex-start; }
+  .will-complete-block .icon { font-weight: 600; color: var(--accent); font-size: 14px; flex-shrink: 0; }
+  .will-complete-block .text { font-size: 12px; color: var(--ink); line-height: 1.6; }
+  .will-complete-block .text .label { color: var(--ink-soft); }
+
+  .pace-block-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 16px; }
+  .pace-block { background: var(--bg); border-radius: 8px; padding: 12px 16px; }
+  .pace-block .label { font-size: 10px; color: var(--ink-muted); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 4px; }
+  .pace-block .value { font-size: 16px; font-weight: 600; color: var(--ink); font-family: 'DM Serif Display', serif; }
+  .pace-block .value.small { font-size: 14px; }
+  .pace-block .value .of { font-size: 11px; color: var(--ink-muted); font-family: 'DM Sans'; font-weight: 400; }
+  .pace-block.warn .value { color: var(--red); }
+  .pace-block.ok .value { color: var(--green); }
+
+  .progress-summary { font-size: 14px; color: var(--ink); line-height: 1.8; }
+  .progress-summary .summary-line { margin-bottom: 8px; }
+  .progress-summary .summary-line:last-child { margin-bottom: 0; }
+  .accent-text { color: var(--accent); font-weight: 500; }
+  .green-text { color: var(--green); font-weight: 500; }
+  .progress-bar-wrap { margin-top: 12px; }
+  .progress-bar-track { height: 8px; background: var(--bg); border-radius: 99px; overflow: hidden; }
+  .progress-bar-fill { height: 100%; background: linear-gradient(90deg, #2D5BE3 0%, #1E7F5E 100%); border-radius: 99px; transition: width 0.8s ease; }
+  .progress-bar-meta { display: flex; justify-content: space-between; margin-top: 6px; font-size: 12px; color: var(--ink-soft); }
+
+  .footer-note { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px 24px; display: flex; gap: 14px; align-items: flex-start; margin-top: 24px; }
+  .note-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+  .note-text { font-size: 12px; color: var(--ink-soft); line-height: 1.7; }
+  .note-text strong { color: var(--ink); }
+
+  @media (max-width: 900px) {
+    .summary-row { grid-template-columns: repeat(2, 1fr); }
+    .detail-hero { grid-template-columns: 1fr; }
+    .detail-meta-grid { grid-template-columns: 1fr; }
+    .skill-grid { grid-template-columns: 1fr; }
+    .history-meta-grid { grid-template-columns: 1fr; }
+    .pace-block-grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 768px) {
+    .report-header { flex-direction: column; align-items: flex-start; padding: 24px 20px; }
+    .header-meta { text-align: left; }
+    .main { padding: 20px 16px 48px; }
+    .table-controls { flex-direction: column; align-items: stretch; }
+    .controls-left, .controls-right { width: 100%; }
+    .search-input { width: 100%; }
+    .tab-nav-inner { padding: 0 16px; overflow-x: auto; }
+    .brand-bar { padding: 12px 20px; }
+    .brand-mark svg { height: 18px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="brand-bar">
+  <a class="brand-mark" href="#" onclick="event.preventDefault(); switchTab('list');" aria-label="UnifyHub">
+    <svg xmlns="http://www.w3.org/2000/svg" width="131" height="19" viewBox="0 0 131 19" fill="none"> <path d="M11.5864 0.121383H15.379V11.7707C15.379 13.0787 15.0666 14.2232 14.4418 15.2042C13.8229 16.1852 12.9557 16.9501 11.8404 17.499C10.7251 18.0421 9.4259 18.3136 7.94273 18.3136C6.45372 18.3136 5.15156 18.0421 4.03627 17.499C2.92097 16.9501 2.05384 16.1852 1.43488 15.2042C0.815918 14.2232 0.506438 13.0787 0.506438 11.7707V0.121383H4.29903V11.4466C4.29903 12.1298 4.44793 12.7371 4.74574 13.2685C5.04938 13.7998 5.47564 14.2173 6.02453 14.521C6.57342 14.8246 7.21282 14.9764 7.94273 14.9764C8.67847 14.9764 9.31787 14.8246 9.86092 14.521C10.4098 14.2173 10.8332 13.7998 11.131 13.2685C11.4346 12.7371 11.5864 12.1298 11.5864 11.4466V0.121383ZM34.2433 0.121383V18.0596H30.9675L23.1633 6.76937H23.0319V18.0596H19.2393V0.121383H22.5677L30.3105 11.4028H30.4682V0.121383H34.2433ZM41.9093 0.121383V18.0596H38.1167V0.121383H41.9093ZM45.7696 18.0596V0.121383H57.6467V3.2483H49.5622V7.52264H56.8584V10.6496H49.5622V18.0596H45.7696ZM59.8866 0.121383H64.1346L68.225 7.84672H68.4002L72.4906 0.121383H76.7387L70.1958 11.7181V18.0596H66.4295V11.7181L59.8866 0.121383ZM80.1632 18.0596V0.121383H82.3354V8.10948H91.9001V0.121383H94.0723V18.0596H91.9001V10.0364H82.3354V18.0596H80.1632ZM110.933 0.121383H113.105V11.9984C113.105 13.2247 112.816 14.3195 112.238 15.283C111.666 16.2406 110.857 16.9968 109.812 17.5516C108.767 18.1004 107.54 18.3749 106.133 18.3749C104.726 18.3749 103.5 18.1004 102.454 17.5516C101.409 16.9968 100.597 16.2406 100.019 15.283C99.4472 14.3195 99.161 13.2247 99.161 11.9984V0.121383H101.333V11.8232C101.333 12.6991 101.526 13.4787 101.911 14.1619C102.297 14.8392 102.846 15.3735 103.558 15.7647C104.276 16.1501 105.135 16.3428 106.133 16.3428C107.132 16.3428 107.99 16.1501 108.708 15.7647C109.426 15.3735 109.975 14.8392 110.355 14.1619C110.74 13.4787 110.933 12.6991 110.933 11.8232V0.121383ZM118.183 18.0596V0.121383H124.454C125.704 0.121383 126.735 0.337436 127.546 0.769541C128.358 1.19581 128.962 1.77097 129.359 2.49504C129.756 3.21327 129.955 4.01033 129.955 4.88621C129.955 5.657 129.818 6.29347 129.543 6.79565C129.275 7.29783 128.918 7.6949 128.475 7.98686C128.037 8.27882 127.561 8.49487 127.047 8.63502V8.81019C127.596 8.84523 128.148 9.03792 128.702 9.38828C129.257 9.73863 129.721 10.2408 130.095 10.8948C130.469 11.5488 130.656 12.3488 130.656 13.2947C130.656 14.194 130.451 15.0027 130.042 15.7209C129.634 16.4392 128.988 17.0085 128.107 17.4289C127.225 17.8494 126.078 18.0596 124.665 18.0596H118.183ZM120.355 16.1326H124.665C126.083 16.1326 127.091 15.8582 127.686 15.3093C128.288 14.7546 128.589 14.083 128.589 13.2947C128.589 12.6875 128.434 12.1269 128.124 11.613C127.815 11.0933 127.374 10.6788 126.802 10.3693C126.229 10.054 125.552 9.89629 124.77 9.89629H120.355V16.1326ZM120.355 8.00438H124.384C125.038 8.00438 125.628 7.87591 126.154 7.61898C126.685 7.36206 127.105 7.00002 127.415 6.53288C127.73 6.06574 127.888 5.51685 127.888 4.88621C127.888 4.09792 127.613 3.42932 127.064 2.88043C126.516 2.3257 125.646 2.04834 124.454 2.04834H120.355V8.00438Z" fill="#313745"></path> </svg>
+  </a>
+</div>
+
+<div class="report-header">
+  <div class="header-left">
+    <div class="company-label">InvestEngine - L&amp;D - English Learning</div>
+    <div class="report-title">Employee English<br>Learning Dashboard</div>
+    <div class="report-subtitle">CEFR-aligned individual and group progress tracking. Standard course length: 120 academic hours</div>
+  </div>
+  <div class="header-meta">
+    <div class="meta-item">Cohort: <strong id="cohortCount">-</strong></div>
+    <div class="meta-item">Reporting period: <strong>May 2025 to April 2026</strong></div>
+    <div class="meta-item">Owner: <strong>HR &amp; L&amp;D</strong></div>
+    <div class="powered-by">CEFR-aligned. Powered by UnifyHub</div>
+  </div>
+</div>
+
+<div class="tab-nav">
+  <div class="tab-nav-inner">
+    <button class="tab-btn active" id="tabBtnList" onclick="switchTab('list')">Learners overview</button>
+    <button class="tab-btn" id="tabBtnMoney" onclick="switchTab('money')">Financial overview</button>
+  </div>
+</div>
+
+<div class="main">
+
+  <div class="list-view" id="listView">
+
+    <div class="section-label">Cohort snapshot</div>
+    <div class="summary-row" id="summaryRow"></div>
+
+    <div class="cefr-card" id="cefrCard"></div>
+
+    <div class="section-label">All learners</div>
+    <div class="table-wrap">
+      <div class="table-controls">
+        <div class="controls-left">
+          <input class="search-input" id="searchInput" placeholder="Search by name..." oninput="applyFilters()">
+          <span class="shown-count" id="shownCount"></span>
+        </div>
+        <div class="controls-right">
+          <div class="filter-group" id="formatFilters"></div>
+          <div class="filter-group" id="levelFilters"></div>
+          <div class="filter-group" id="statusFilters"></div>
+          <div class="filter-group" id="midtermFilters"></div>
+          <button class="reset-btn" onclick="resetView()" title="Clear filters, search, and sorting">Reset view</button>
+        </div>
+      </div>
+      <div style="overflow-x:auto;">
+        <table>
+          <thead><tr id="tableHead"></tr></thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="footer-note">
+      <div class="note-icon">i</div>
+      <div class="note-text">
+        <strong>Methodology:</strong> Course completion is measured against each learner's individual target (120 ac.h. as standard; Arthur Badin's target is 101 ac.h. because 18.62 h. were already completed in his C2 group). Each chart starts from the learner's own course start month through April 2026. <strong>Pace</strong> is the average academic hours per month over the last 3 months (Feb-Apr 2026); the cohort flags any active learner pacing below 4 h/month as 'at risk'. <strong>Forecast finish</strong> projects the month a learner will reach their target at current pace. Individual midterm assessments use a narrative format; group midterm uses six skill percentages plus Motivation and Self-Study scores. For on-hold learners no expected finish date is set. Click any row to open the detailed card.
+      </div>
+    </div>
+  </div>
+
+  <div class="money-view" id="moneyView">
+    <div class="section-label">Financial summary</div>
+    <div class="summary-row" id="moneySummaryRow"></div>
+
+    <div class="cefr-card" id="costSplitCard"></div>
+
+    <div class="section-label">Per-learner financials</div>
+    <div class="table-wrap">
+      <div class="table-controls">
+        <div class="controls-left">
+          <input class="search-input" id="moneySearchInput" placeholder="Search by name..." oninput="renderMoneyTable()">
+          <span class="shown-count" id="moneyShownCount"></span>
+        </div>
+        <div class="controls-right">
+          <div class="filter-group" id="moneyFormatFilters"></div>
+        </div>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="money-table">
+          <thead><tr id="moneyTableHead"></tr></thead>
+          <tbody id="moneyTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="footer-note">
+      <div class="note-icon">€</div>
+      <div class="note-text">
+        <strong>Cost methodology:</strong> Individual learners are billed at EUR 30 per academic hour. Group learners are billed at EUR 27 per academic hour; the per-learner group total is each member's own attendance × EUR 27 (so two members of the same group may differ if their attendance differs). "Total invested" sums individual and group spend without double-counting. "Cost per completed hour" equals total spend divided by total academic hours delivered. "Projected spend to completion" extrapolates current pace × remaining hours × applicable rate.
+      </div>
+    </div>
+  </div>
+
+  <div class="detail-view" id="detailView">
+    <button class="back-button" onclick="goBack()"><span style="font-size:14px;">&larr;</span> Back to all learners</button>
+    <div class="detail-hero" id="detailHero"></div>
+    <div class="detail-card">
+      <h2>Monthly progress: academic hours per month</h2>
+      <div class="chart-wrap" id="chartWrap"><canvas id="progressChart"></canvas></div>
+    </div>
+    <div class="detail-card">
+      <h2>Midterm assessment</h2>
+      <div id="midtermSection"></div>
+    </div>
+    <div id="historySection"></div>
+    <div class="detail-card">
+      <h2>Overall progress summary</h2>
+      <div id="progressSummary"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const STUDENTS = [{"name":"Dmitriy Bakchinov","teacher":"Kevin","level":"A2+","totalHours":65.22,"totalCost":1716.6000000000001,"pricePerHour":30.0,"isActive":true,"monthlyAttendance":{"May":1.33,"June":6.65,"July":1.33,"August":5.32,"September":6.65,"October":5.32,"November":5.32,"December":5.32,"January":6.66,"February":5.33,"March":6.66,"April":9.33},"isGroup":false,"groupName":null,"targetHours":120,"startYear":2025,"startMonth":5,"startMonthLabel":"May 2025","progress":{"recommendedLevel":"Elementary (based on group placement test; recommended Pre-Intermediate for individual lessons)","courseStartDate":"26.05.2025","courseStartMonthLabel":"May 2025","courseEndDate":null,"courseEndApproximate":true,"courseType":"Business","courseLevelDetails":"Pre-intermediate\n(based on Business Result)","placementWritten":"29/45\nPre-intermediate","placementSpeaking":"Low Elementary","willComplete":null,"courseEndDateLabel":"May 2026","courseEndIsSet":true},"midterm":{"type":"individual","status":"not_taken","percentage":null,"details":null},"paceHoursPerMonth":7.11,"forecastFinish":"December 2026"},{"name":"Liudmila Abramova","teacher":"Michael","level":"C1","totalHours":54.239999999999995,"totalCost":1587.0000000000002,"pricePerHour":30.0,"isActive":true,"monthlyAttendance":{"May":0.0,"June":4.99,"July":3.99,"August":5.32,"September":3.99,"October":5.32,"November":5.32,"December":5.32,"January":4.0,"February":4.0,"March":6.66,"April":5.33},"isGroup":false,"groupName":null,"targetHours":120,"startYear":2025,"startMonth":6,"startMonthLabel":"June 2025","progress":{"recommendedLevel":"Advanced/Advanced plus","courseStartDate":"16.06.2025","courseStartMonthLabel":"June 2025","courseEndDate":null,"courseEndApproximate":true,"courseType":"General","courseLevelDetails":"Advanced plus\n(based on Speakout C1 - C2)","placementWritten":"44/45 Advanced","placementSpeaking":"Advanced","willComplete":null,"courseEndDateLabel":"June 2026","courseEndIsSet":true},"midterm":{"type":"individual","status":"not_taken","percentage":null,"details":null},"paceHoursPerMonth":5.33,"forecastFinish":"April 2027"},{"name":"Alexander Shatalin","teacher":"Bridgid","level":"C1","totalHours":65.21,"totalCost":1956.0000000000005,"pricePerHour":30.0,"isActive":true,"monthlyAttendance":{"May":1.33,"June":5.32,"July":6.65,"August":3.99,"September":7.98,"October":5.32,"November":5.32,"December":6.65,"January":5.33,"February":5.33,"March":5.33,"April":6.66},"isGroup":false,"groupName":null,"targetHours":120,"startYear":2025,"startMonth":5,"startMonthLabel":"May 2025","progress":{"recommendedLevel":"Advanced","courseStartDate":"27.05.2025","courseStartMonthLabel":"May 2025","courseEndDate":null,"courseEndApproximate":true,"courseType":"General","courseLevelDetails":"Advanced \n(based on Outcomes and English file Advanced)","placementWritten":"Advanced/ Upper-Intermediate  (39)","placementSpeaking":"Low Advanced","willComplete":"yes","courseEndDateLabel":"May 2026","courseEndIsSet":true},"midterm":{"type":"individual","status":"completed","percentage":0.98,"details":{"vocabularyGrammar":"Has studied and practised narrative tenses, continuous forms, and multiple uses of have, as well as language for describing habits, character traits, and work-related concepts such as team building, change, and brainstorming. Can talk about trends and change with numbers and graphs. Demonstrates developing control of grammatical structures within the C1 range. While accuracy is generally good in guided tasks, errors still occur in spontaneous production, particularly with verb tenses and word order. Lexical range allows discussion of familiar and professional topics, though occasional reliance on general or imprecise wording remains.","receptiveSkills":"Receptive skills align well with C1 descriptors. Understands extended listening materials on both familiar and unfamiliar topics and can follow complex lines of argument in spoken discourse. Reading skills meet C1 level requirements: comprehends main ideas and supporting details with minimal support and confidently interprets a range of texts.","productiveSkills":"Communicates fluently and conveys ideas clearly and coherently. Can participate effectively in discussions and present arguments with a good level of spontaneity. Can describe trends and numbers with confidence and use a variety of terms. Occasional limitations in grammatical control and lexical accuracy reduce precision at times; however, these do not significantly interfere with overall understanding.","attendance":"High attendance. Homework done regularly","cefrLevel":"C1 in progress"}},"paceHoursPerMonth":5.77,"forecastFinish":"January 2027"},{"name":"Alexander Machugovskiy","teacher":"Karen","level":"B1+","totalHours":61.22,"totalCost":1876.2000000000003,"pricePerHour":30.0,"isActive":true,"monthlyAttendance":{"May":0.0,"June":5.32,"July":6.65,"August":5.32,"September":6.65,"October":3.99,"November":6.65,"December":3.99,"January":5.33,"February":5.33,"March":6.66,"April":5.33},"isGroup":false,"groupName":null,"targetHours":120,"startYear":2025,"startMonth":6,"startMonthLabel":"June 2025","progress":{"recommendedLevel":"Intermediate Plus","courseStartDate":"05.06.2025","courseStartMonthLabel":"June 2025","courseEndDate":null,"courseEndApproximate":true,"courseType":"General","courseLevelDetails":"Intermediate Plus\n(based on Speakout)","placementWritten":"Intermediate","placementSpeaking":"Intermediate","willComplete":"yes","courseEndDateLabel":"June 2026","courseEndIsSet":true},"midterm":{"type":"individual","status":"completed","percentage":0.84,"details":{"vocabularyGrammar":"Has studied and practised narrative tenses, verb patterns, Present perfect continuous, relative clauses, conditional structures using alternatives to 'if', verbs and structures to express necessity, obligation and permission, past plans and intention and indirect and negative questions. Sasha demonstrates increasing control of the grammatical structures within the upper B1 range with errors only occuring when pushing himself beyond his level. Lexical topics studied so far include describing possessions, personal preferences, making changes, collocations related to feelings and behaviour, pet hates, work, personality adjectives with negative prefixes, truth and lies, adjectives to describe films, films and film-making, and the news. As well as these core lexical sets, there is always emergent language present within Sasha's lessons, as he is keen to expand his lexical knowledge.","receptiveSkills":"Receptive skills align with upper B1 level. Understands and enjoys a wide range of reading and listening material on familiar and unfamiliar topics. Sasha is beginning to notice implied meanings and nuances in texts as he moves towards B2 level. Can confidently follow listening texts with minimal support and can interpret a range of reading texts suitable for the level.","productiveSkills":"Sasha continues to be a vibrant and engaged student. He has reached the midway point of the course with a high level of enthusiasm, consistently demonstrating that he is a confident and proactive learner. His primary strength lies in his oral communication. He is a fairly fluent speaker who can navigate a variety of general topics with ease, excels in spontaneous interaction and does not hesitate to express his opinions.\nHis speaking skills are accurately aligned with the B1+ level, showing a good command of core grammatical structures and a growing range of vocabulary. While Sasha’s personal preference is to focus on verbal communication, when provided with the appropriate frameworks and support, he produces coherent written work. As he does not use writing frequently in his daily life, he occasionally views it as a secondary priority. However, increasing his focus here will help solidify the accuracy of the language he uses so fluently when speaking.","attendance":"Perfect attendance. Homework completed regularly.","cefrLevel":"B1+ in progress"}},"paceHoursPerMonth":5.77,"forecastFinish":"February 2027"},{"name":"Nikita Nechaev","teacher":"Kevin","level":"B1","totalHours":52.89999999999999,"totalCost":1626.6000000000001,"pricePerHour":30.0,"isActive":true,"monthlyAttendance":{"May":0.0,"June":3.66,"July":6.65,"August":3.99,"September":5.32,"October":3.99,"November":5.32,"December":5.32,"January":2.66,"February":5.33,"March":5.33,"April":5.33},"isGroup":false,"groupName":null,"targetHours":120,"startYear":2025,"startMonth":6,"startMonthLabel":"June 2025","progress":{"recommendedLevel":"High Elementary (based on group placement test; recommended Intermediate for individual lessons)","courseStartDate":"04.06.2025","courseStartMonthLabel":"June 2025","courseEndDate":null,"courseEndApproximate":true,"courseType":"General","courseLevelDetails":"Intermediate\n(based on Speakout B1)","placementWritten":"Pre-intermediate","placementSpeaking":"Elementary","willComplete":null,"courseEndDateLabel":"June 2026","courseEndIsSet":true},"midterm":{"type":"individual","status":"not_taken","percentage":null,"details":null},"paceHoursPerMonth":5.33,"forecastFinish":"May 2027"},{"name":"Aleksandr Pyatnitsin","teacher":"Bridgid","level":"B1","totalHours":55.56999999999999,"totalCost":1626.9000000000003,"pricePerHour":30.0,"isActive":true,"monthlyAttendance":{"May":0.0,"June":4.99,"July":3.99,"August":2.66,"September":5.32,"October":5.32,"November":5.32,"December":6.65,"January":4.0,"February":5.33,"March":6.66,"April":5.33},"isGroup":false,"groupName":null,"targetHours":120,"startYear":2025,"startMonth":6,"startMonthLabel":"June 2025","progress":{"recommendedLevel":"Intermediate","courseStartDate":"04.06.2025","courseStartMonthLabel":"June 2025","courseEndDate":null,"courseEndApproximate":true,"courseType":"General","courseLevelDetails":"Intermediate\n(based on Speakout B1)","placementWritten":"Pre-intermediate","placementSpeaking":"Low Intermediate","willComplete":null,"courseEndDateLabel":"June 2026","courseEndIsSet":true},"midterm":{"type":"individual","status":"not_taken","percentage":null,"details":null},"paceHoursPerMonth":5.77,"forecastFinish":"March 2027"},{"name":"Ivan Kokorin","teacher":"Wayne","level":"C1","totalHours":58.22999999999999,"totalCost":1746.6000000000004,"pricePerHour":30.0,"isActive":true,"monthlyAttendance":{"May":1.0,"June":5.32,"July":6.65,"August":5.32,"September":5.32,"October":2.66,"November":5.32,"December":5.32,"January":4.0,"February":5.33,"March":5.33,"April":6.66},"isGroup":false,"groupName":null,"targetHours":120,"startYear":2025,"startMonth":5,"startMonthLabel":"May 2025","progress":{"recommendedLevel":"Advanced","courseStartDate":"29.05.2025","courseStartMonthLabel":"May 2025","courseEndDate":null,"courseEndApproximate":true,"courseType":"General","courseLevelDetails":"Advanced \n(based on Speakout C1-C2)","placementWritten":"43/45\nAdvanced","placementSpeaking":"Low Advanced","willComplete":null,"courseEndDateLabel":"May 2026","courseEndIsSet":true},"midterm":{"type":"individual","status":"not_taken","percentage":null,"details":null},"paceHoursPerMonth":5.77,"forecastFinish":"March 2027"},{"name":"Danil Khismatulin","teacher":"Tiffany","level":"B1","totalHours":58.23,"totalCost":1826.4,"pricePerHour":30.0,"isActive":true,"monthlyAttendance":{"May":1.0,"June":5.32,"July":6.65,"August":5.32,"September":5.32,"October":6.65,"November":3.99,"December":5.32,"January":5.33,"February":4.0,"March":5.33,"April":4.0},"isGroup":false,"groupName":null,"targetHours":120,"startYear":2025,"startMonth":5,"startMonthLabel":"May 2025","progress":{"recommendedLevel":"Intermediate plus","courseStartDate":"29.05.2025","courseStartMonthLabel":"May 2025","courseEndDate":null,"courseEndApproximate":true,"courseType":"General, Business","courseLevelDetails":"Intermediate Plus \n(based on Speakout),\nEnglish for Job Interviews (aimed at B1/B1+ level)","placementWritten":"Intermediate","placementSpeaking":"Intermediate","willComplete":null,"courseEndDateLabel":"May 2026","courseEndIsSet":true},"midterm":{"type":"individual","status":"not_taken","percentage":null,"details":null},"paceHoursPerMonth":4.44,"forecastFinish":"June 2027"},{"name":"Illia Sakharau","teacher":"Kevin","level":"B1+","totalHours":62.22,"totalCost":1866.3000000000002,"pricePerHour":30.0,"isActive":true,"monthlyAttendance":{"May":0.0,"June":4.99,"July":6.65,"August":5.32,"September":5.32,"October":6.65,"November":5.32,"December":5.32,"January":5.33,"February":5.33,"March":5.33,"April":6.66},"isGroup":false,"groupName":null,"targetHours":120,"startYear":2025,"startMonth":6,"startMonthLabel":"June 2025","progress":{"recommendedLevel":"Intermediate/Intermediate plus","courseStartDate":"04.06.2025","courseStartMonthLabel":"June 2025","courseEndDate":null,"courseEndApproximate":true,"courseType":"Business, General","courseLevelDetails":"Intermediate plus\nGeneral English B1+/ Business English B1","placementWritten":"31/45\nIntermediate","placementSpeaking":"Intermediate","willComplete":null,"courseEndDateLabel":"June 2026","courseEndIsSet":true},"midterm":{"type":"individual","status":"not_taken","percentage":null,"details":null},"paceHoursPerMonth":5.77,"forecastFinish":"February 2027"},{"name":"Mari Ishmitova","teacher":"Kristine","level":"B1","totalHours":57.900000000000006,"totalCost":1736.7000000000003,"pricePerHour":30.0,"isActive":true,"monthlyAttendance":{"May":0.0,"June":3.33,"July":5.32,"August":6.65,"September":5.32,"October":6.65,"November":3.99,"December":3.99,"January":5.33,"February":6.66,"March":5.33,"April":5.33},"isGroup":false,"groupName":null,"targetHours":120,"startYear":2025,"startMonth":6,"startMonthLabel":"June 2025","progress":{"recommendedLevel":"Intermediate","courseStartDate":"20.06.2025","courseStartMonthLabel":"June 2025","courseEndDate":null,"courseEndApproximate":true,"courseType":"Business","courseLevelDetails":"Intermediate\n(based on Business Result)","placementWritten":"The student stated her level and asked the teacher to define it precisely during the first class.","placementSpeaking":"Placement based on student's self-report + teacher's assessment during the first class (no written placement test).","willComplete":null,"courseEndDateLabel":"June 2026","courseEndIsSet":true},"midterm":{"type":"individual","status":"not_taken","percentage":null,"details":null},"paceHoursPerMonth":5.77,"forecastFinish":"March 2027"},{"name":"Anastasiia Vorontsova","teacher":"Wayne","level":"B2","totalHours":54.239999999999995,"totalCost":1497.3000000000002,"pricePerHour":30.0,"isActive":true,"monthlyAttendance":{"May":0.0,"June":0.0,"July":1.0,"August":7.98,"September":5.32,"October":6.65,"November":5.32,"December":5.32,"January":6.66,"February":5.33,"March":5.33,"April":5.33},"isGroup":false,"groupName":null,"targetHours":120,"startYear":2025,"startMonth":8,"startMonthLabel":"August 2025","progress":{"recommendedLevel":"Upper-Intermediate","courseStartDate":"04.08.2025","courseStartMonthLabel":"August 2025","courseEndDate":null,"courseEndApproximate":true,"courseType":"General","courseLevelDetails":"Upper-Intermediate\n(based on Speakout)","placementWritten":"The student stated her level and asked the teacher to define it precisely during the first class.","placementSpeaking":"Placement based on student's self-report + teacher's assessment during the first class (no written placement test).","willComplete":null,"courseEndDateLabel":"August 2026","courseEndIsSet":true},"midterm":{"type":"individual","status":"not_taken","percentage":null,"details":null},"paceHoursPerMonth":5.33,"forecastFinish":"April 2027"},{"name":"Evgeniy Moiseev","teacher":"Wayne","level":"C1","totalHours":26.64,"totalCost":679.2,"pricePerHour":30.0,"isActive":true,"monthlyAttendance":{"May":0.0,"June":0.0,"July":0.0,"August":0.0,"September":0.0,"October":0.0,"November":1.33,"December":5.32,"January":5.33,"February":5.33,"March":5.33,"April":4.0},"isGroup":false,"groupName":null,"targetHours":120,"startYear":2025,"startMonth":11,"startMonthLabel":"November 2025","progress":{"recommendedLevel":"Advanced","courseStartDate":"28.11.2025","courseStartMonthLabel":"November 2025","courseEndDate":null,"courseEndApproximate":true,"courseType":"General","courseLevelDetails":"Advanced\n(based on Outcomes Advanced)","placementWritten":"45/45\nAdvanced","placementSpeaking":"Upper-Intermediate","willComplete":null,"courseEndDateLabel":"November 2026","courseEndIsSet":true},"midterm":{"type":"individual","status":"not_taken","percentage":null,"details":null},"paceHoursPerMonth":4.89,"forecastFinish":"November 2027"},{"name":"Arthur Badin","teacher":"Samantha","level":"C2","totalHours":22.65,"totalCost":479.70000000000005,"pricePerHour":30.0,"isActive":true,"monthlyAttendance":{"May":0.0,"June":0.0,"July":0.0,"August":0.0,"September":0.0,"October":0.0,"November":0.0,"December":0.0,"January":5.33,"February":5.33,"March":5.33,"April":6.66},"isGroup":false,"groupName":null,"targetHours":101,"startYear":2026,"startMonth":1,"startMonthLabel":"January 2026","progress":{"recommendedLevel":null,"courseStartDate":"06.01.2026","courseStartMonthLabel":"January 2026","courseEndDate":null,"courseEndApproximate":true,"courseType":"General","courseLevelDetails":"Proficiency  (Based on English file)","placementWritten":"Arthur has finished the C1 course, proceeded to the C2 course, and completed 18.62 academic hours in the group before moving to individual classes.","placementSpeaking":null,"willComplete":null,"courseEndDateLabel":"January 2027","courseEndIsSet":true},"midterm":{"type":"individual","status":"not_taken","percentage":null,"details":null},"paceHoursPerMonth":5.77,"forecastFinish":"June 2027"},{"name":"Pavel Lytkin","teacher":"Kevin","level":"B1","totalHours":17.33,"totalCost":360.0,"pricePerHour":30.0,"isActive":true,"monthlyAttendance":{"May":0.0,"June":0.0,"July":0.0,"August":0.0,"September":0.0,"October":0.0,"November":0.0,"December":0.0,"January":4.0,"February":4.0,"March":4.0,"April":5.33},"isGroup":false,"groupName":null,"targetHours":120,"startYear":2025,"startMonth":12,"startMonthLabel":"December 2025","progress":{"recommendedLevel":"Intermediate","courseStartDate":"10.12.2025","courseStartMonthLabel":"December 2025","courseEndDate":null,"courseEndApproximate":true,"courseType":"Business","courseLevelDetails":"Intermediate\n(based on Business Result)","placementWritten":"34/45\nIntermediate","placementSpeaking":"Pre-Intermediate\n Pavel Lytkin_December 2025.mp4","willComplete":null,"courseEndDateLabel":"December 2026","courseEndIsSet":true},"midterm":{"type":"individual","status":"not_taken","percentage":null,"details":null},"paceHoursPerMonth":4.44,"forecastFinish":"March 2028"},{"name":"Alex Vishnivetskiy","teacher":"Jordan","level":"B2","totalHours":15.66,"totalCost":309.9,"pricePerHour":30.0,"isActive":false,"monthlyAttendance":{"May":0.0,"June":0.0,"July":0.0,"August":0.0,"September":0.0,"October":0.0,"November":0.0,"December":0.0,"January":0.0,"February":5.0,"March":5.33,"April":5.33},"isGroup":false,"groupName":null,"targetHours":120,"startYear":2026,"startMonth":2,"startMonthLabel":"February 2026","progress":{"recommendedLevel":"Upper-Intermediate","courseStartDate":"03.02.2026","courseStartMonthLabel":"February 2026","courseEndDate":null,"courseEndApproximate":false,"courseType":"General","courseLevelDetails":"Upper-Intermediate (Based on Outcomes)","placementWritten":"35/45\nIntermediate","placementSpeaking":"Intermediate\nAlex Vishnivetskiy_ January 2026","willComplete":null,"courseEndDateLabel":null,"courseEndIsSet":false},"midterm":{"type":"individual","status":"not_taken","percentage":null,"details":null},"paceHoursPerMonth":null,"forecastFinish":null},{"name":"Nikita Kniazkin","teacher":"Kevin","level":"B1+","totalHours":27.66,"totalCost":469.8,"pricePerHour":30.0,"isActive":true,"monthlyAttendance":{"May":0.0,"June":0.0,"July":0.0,"August":0.0,"September":0.0,"October":0.0,"November":0.0,"December":0.0,"January":0.0,"February":5.0,"March":10.66,"April":12.0},"isGroup":false,"groupName":null,"targetHours":120,"startYear":2026,"startMonth":2,"startMonthLabel":"February 2026","progress":{"recommendedLevel":"Intermediate Plus","courseStartDate":"12.02.2026","courseStartMonthLabel":"February 2026","courseEndDate":null,"courseEndApproximate":true,"courseType":"General","courseLevelDetails":"Intermediate/Intermediate Plus(Based on Outcomes)","placementWritten":"Pre-Intermediate (24/45)","placementSpeaking":"Intermediate\nNikita Kniazkin February 2026","willComplete":null,"courseEndDateLabel":"February 2027","courseEndIsSet":true},"midterm":{"type":"individual","status":"not_taken","percentage":null,"details":null},"paceHoursPerMonth":9.22,"forecastFinish":"February 2027"},{"name":"Yuliya Sakharava","teacher":"Andrea","level":"B2","totalHours":8.99,"totalCost":69.9,"pricePerHour":30.0,"isActive":true,"monthlyAttendance":{"May":0.0,"June":0.0,"July":0.0,"August":0.0,"September":0.0,"October":0.0,"November":0.0,"December":0.0,"January":0.0,"February":0.0,"March":2.33,"April":6.66},"isGroup":false,"groupName":null,"targetHours":120,"startYear":2026,"startMonth":3,"startMonthLabel":"March 2026","progress":{"recommendedLevel":"Upper-Intermediate","courseStartDate":"18.03.2026","courseStartMonthLabel":"March 2026","courseEndDate":null,"courseEndApproximate":true,"courseType":"Business","courseLevelDetails":"Upper-Intermediate (Based on Business Partner and Business Communication)","placementWritten":"Upper-Intermediate (38/45)","placementSpeaking":"Intermediate\nYuliya Sakharava_March 2026","willComplete":null,"courseEndDateLabel":"March 2027","courseEndIsSet":true},"midterm":{"type":"individual","status":"not_taken","percentage":null,"details":null},"paceHoursPerMonth":4.5,"forecastFinish":"May 2028"},{"name":"Evgeniy Korobov","teacher":"Kevin","level":"B1","totalHours":22.299999999999997,"totalCost":748.8,"pricePerHour":30.0,"isActive":false,"monthlyAttendance":{"May":0.0,"June":3.0,"July":2.66,"August":7.33,"September":3.99,"October":3.99,"November":1.33,"December":0.0,"January":0.0,"February":0.0,"March":0.0,"April":0.0},"isGroup":false,"groupName":null,"targetHours":120,"startYear":2025,"startMonth":6,"startMonthLabel":"June 2025","progress":null,"midterm":{"type":"individual","status":"not_taken","percentage":null,"details":null},"paceHoursPerMonth":null,"forecastFinish":null},{"name":"Daniil Skrobov","teacher":"Michael","level":"C1","totalHours":26.61,"totalCost":798.3000000000001,"pricePerHour":30.0,"isActive":false,"monthlyAttendance":{"May":0.0,"June":0.0,"July":0.0,"August":5.32,"September":3.99,"October":3.99,"November":5.32,"December":3.99,"January":4.0,"February":0.0,"March":0.0,"April":0.0},"isGroup":false,"groupName":null,"targetHours":120,"startYear":2025,"startMonth":4,"startMonthLabel":"April 2025","progress":{"recommendedLevel":"Advanced","courseStartDate":"16.04.2025","courseStartMonthLabel":"April 2025","courseEndDate":null,"courseEndApproximate":false,"courseType":"Special","courseLevelDetails":"Advanced Oral Communication course (based on the designed material)","placementWritten":"43/45\nAdvanced","placementSpeaking":"Low Advanced","willComplete":null,"courseEndDateLabel":null,"courseEndIsSet":false},"midterm":{"type":"individual","status":"not_taken","percentage":null,"details":null},"paceHoursPerMonth":null,"forecastFinish":null},{"name":"Irina Kulakovskaya","teacher":"Kristine","level":"B1","totalHours":5.32,"totalCost":159.60000000000002,"pricePerHour":30.0,"isActive":false,"monthlyAttendance":{"May":0.0,"June":0.0,"July":0.0,"August":0.0,"September":0.0,"October":0.0,"November":0.0,"December":5.32,"January":0.0,"February":0.0,"March":0.0,"April":0.0},"isGroup":false,"groupName":null,"targetHours":120,"startYear":2025,"startMonth":12,"startMonthLabel":"December 2025","progress":{"recommendedLevel":"Intermediate","courseStartDate":"10.12.2025","courseStartMonthLabel":"December 2025","courseEndDate":null,"courseEndApproximate":false,"courseType":"Business","courseLevelDetails":"Intermediate\n(based on Business Result)","placementWritten":"32/45\nIntermediate","placementSpeaking":"Pre-Intermediate","willComplete":null,"courseEndDateLabel":null,"courseEndIsSet":false},"midterm":{"type":"individual","status":"not_taken","percentage":null,"details":null},"paceHoursPerMonth":null,"forecastFinish":null},{"name":"Alexander Kostin","teacher":"Chris","level":"C1","totalHours":19.950000000000003,"totalCost":798.0,"pricePerHour":30.0,"isActive":false,"monthlyAttendance":{"May":1.33,"June":3.99,"July":6.65,"August":3.99,"September":2.66,"October":1.33,"November":0.0,"December":0.0,"January":0.0,"February":0.0,"March":0.0,"April":0.0},"isGroup":false,"groupName":null,"targetHours":120,"startYear":2025,"startMonth":5,"startMonthLabel":"May 2025","progress":null,"midterm":{"type":"individual","status":"not_taken","percentage":null,"details":null},"paceHoursPerMonth":null,"forecastFinish":null},{"name":"Hanna Zhyhimont","teacher":"Karen","level":"B1","totalHours":14.3,"totalCost":548.7,"pricePerHour":30.0,"isActive":false,"monthlyAttendance":{"May":0.0,"June":3.66,"July":3.99,"August":3.99,"September":2.66,"October":0.0,"November":0.0,"December":0.0,"January":0.0,"February":0.0,"March":0.0,"April":0.0},"isGroup":false,"groupName":null,"targetHours":120,"startYear":2025,"startMonth":6,"startMonthLabel":"June 2025","progress":null,"midterm":{"type":"individual","status":"not_taken","percentage":null,"details":null},"paceHoursPerMonth":null,"forecastFinish":null},{"name":"Dmitrii Danilevich","teacher":"Michael","level":"B2","totalHours":8.98,"totalCost":468.9,"pricePerHour":30.0,"isActive":false,"monthlyAttendance":{"May":0.0,"June":1.0,"July":6.65,"August":1.33,"September":0.0,"October":0.0,"November":0.0,"December":0.0,"January":0.0,"February":0.0,"March":0.0,"April":0.0},"isGroup":false,"groupName":null,"targetHours":120,"startYear":2025,"startMonth":6,"startMonthLabel":"June 2025","progress":null,"midterm":{"type":"individual","status":"not_taken","percentage":null,"details":null},"paceHoursPerMonth":null,"forecastFinish":null},{"name":"Artemiy Zakharov","teacher":"Tiffany","level":"B2","totalHours":19.62,"totalCost":788.1,"pricePerHour":30.0,"isActive":false,"monthlyAttendance":{"May":0.0,"June":4.99,"July":6.65,"August":3.99,"September":3.99,"October":0.0,"November":0.0,"December":0.0,"January":0.0,"February":0.0,"March":0.0,"April":0.0},"isGroup":false,"groupName":null,"targetHours":120,"startYear":2025,"startMonth":6,"startMonthLabel":"June 2025","progress":null,"midterm":{"type":"individual","status":"not_taken","percentage":null,"details":null},"paceHoursPerMonth":null,"forecastFinish":null},{"name":"Alexey Dukin","teacher":"Kevin Moulder","level":"B1","totalHours":63.93,"totalCost":1797.93,"groupBillingHours":66.59,"pricePerHour":27.0,"isActive":true,"monthlyAttendance":{"May":0,"June":0,"July":0,"August":0,"September":0,"October":0,"November":10.64,"December":11.97,"January":10.66,"February":10.66,"March":8.0,"April":12.0},"isGroup":true,"groupName":"Group1_Kevin","startYear":2025,"startMonth":11,"startMonthLabel":"November 2025","targetHours":120,"progress":{"recommendedLevel":"A2+  /Pre-Intermediate/","courseStartDate":"25.11.2025","courseStartMonthLabel":"November 2025","courseEndDate":"30.09.2026","courseEndDateLabel":"September 2026","courseEndApproximate":true,"courseEndIsSet":true,"courseType":"Group · General English Intermediate (based on Outcomes)","courseLevelDetails":"General English Intermediate (based on Outcomes)","placementWritten":null,"placementSpeaking":null,"willComplete":null},"midterm":{"type":"group","status":"completed","percentage":0.795,"details":{"motivation":5.0,"selfStudy":5.0,"grammar":0.7,"vocabulary":0.9,"listening":0.8,"reading":0.77,"writing":0.8,"speaking":0.8,"comment":"Alex has improved steadily and continues to build his confidence in English. He is able to produce longer sentences, justify his ideas, and show some nuance in conversation. While he still makes some mistakes, his basic grammar is generally good, and his vocabulary is gradually improving, although he can occasionally struggle to find the right word. He has started to use the present perfect, but this remains limited, and he sometimes misuses “going to” for future forms. His pronunciation needs further development, and this is an area we are currently focusing on. He can use some basic phrasal verbs, and his listening and reading skills are adequate for his level. To progress further, he should continue engaging with authentic materials such as podcasts and TV programmes at home. He would also benefit from developing a better understanding of register, particularly the differences between formal and informal language, and practising appropriate greetings and responses in business contexts. I recommend extending the course to ensure he consolidates his skills and develops into a strong, confident B1-level speaker.","currentLevel":"A2+  /Pre-Intermediate/","courseEnd":"30.09.2026"}},"history":[{"courseName":"Business Result Pre-intermediate","courseLevel":"A2+ (Pre-Intermediate)","groupName":"Group1_Kevin","groupTeacher":"Kevin Moulder","startDate":"13.01.2025","endDate":"24.11.2025","startDateLabel":"January 2025","endDateLabel":"November 2025","totalHours":111.72,"totalCost":3016.44,"endLevel":"A2+ (Pre-Intermediate)","recommendedNext":"B1 (Intermediate)","finalOverallPct":0.9433333333,"finalSkills":{"grammar":0.97,"vocabulary":0.94,"listening":1.0,"reading":1.0,"writing":0.9,"speaking":0.85},"finalMotivation":5.0,"finalSelfStudy":5.0,"comment":"Alex has made great progress throughout the course and has demonstrated noticeable development in all key language areas. He is now able to use more complex grammatical structures, including the present perfect and various conditional forms, with increasing accuracy. His fluency has also improved, although he would still benefit from continued practice to speak more smoothly and confidently.\nAlex has been a dedicated student, and with further practice he will continue to make excellent progress.","correctedTypo":true}],"paceHoursPerMonth":10.22,"forecastFinish":"September 2026"},{"name":"Dmitry Egerev","teacher":"Kevin Moulder","level":"B1","totalHours":63.93,"totalCost":1797.93,"groupBillingHours":66.59,"pricePerHour":27.0,"isActive":true,"monthlyAttendance":{"May":0,"June":0,"July":0,"August":0,"September":0,"October":0,"November":10.64,"December":11.97,"January":10.66,"February":8.0,"March":10.66,"April":12.0},"isGroup":true,"groupName":"Group1_Kevin","startYear":2025,"startMonth":11,"startMonthLabel":"November 2025","targetHours":120,"progress":{"recommendedLevel":"A2+  /Pre-Intermediate/","courseStartDate":"25.11.2025","courseStartMonthLabel":"November 2025","courseEndDate":"30.09.2026","courseEndDateLabel":"September 2026","courseEndApproximate":true,"courseEndIsSet":true,"courseType":"Group · ","courseLevelDetails":null,"placementWritten":null,"placementSpeaking":null,"willComplete":null},"midterm":{"type":"group","status":"completed","percentage":0.8916666667,"details":{"motivation":5.0,"selfStudy":5.0,"grammar":0.85,"vocabulary":0.85,"listening":1.0,"reading":1.0,"writing":0.8,"speaking":0.85,"comment":"Dmitry has made significant progress and demonstrates good fluency in spoken English, showing increasing confidence when communicating about both work-related and social topics. He is beginning to use the present perfect in speech, which is a positive step forward, although he still makes some mistakes with collocations and prepositions. He can use basic phrasal verbs effectively, and his listening and reading skills are strong, supporting his overall development. To continue improving, he should focus on varying his register depending on the topic and context, as well as building greater flexibility in his language use. Regular exposure to English outside of class, particularly through reading texts and listening to podcasts, will be highly beneficial. His grammar and vocabulary are appropriate for a B1 level, and I recommend extending the course to ensure he fully consolidates his skills and develops into a strong, confident B1-level speaker.","currentLevel":"A2+  /Pre-Intermediate/","courseEnd":"30.09.2026"}},"history":[{"courseName":"Business Result Pre-intermediate","courseLevel":"A2+ (Pre-Intermediate)","groupName":"Group1_Kevin","groupTeacher":"Kevin Moulder","startDate":"13.01.2025","endDate":"24.11.2025","startDateLabel":"January 2025","endDateLabel":"November 2025","totalHours":111.72,"totalCost":3016.44,"endLevel":"A2+ (Pre-Intermediate)","recommendedNext":"B1 (Intermediate)","finalOverallPct":0.9433333333,"finalSkills":{"grammar":0.85,"vocabulary":0.96,"listening":1.0,"reading":1.0,"writing":0.95,"speaking":0.9},"finalMotivation":5.0,"finalSelfStudy":5.0,"comment":"Dimitry has shown rapid improvement in both confidence and skill throughout the course. He has a high level of grammar and is now able to use a wide range of complex forms, including perfect tenses, conditionals, and various types of clauses, naturally in his everyday speech. His fluency has greatly improved, and with continued practice he can further develop his ability to elongate sentences and express his ideas in more nuanced and detailed ways.\nTo make his spoken English even more natural, Dimitry should continue expanding his vocabulary, particularly by adding more phrasal verbs and collocations to his active use. His writing skills are strong, and he would benefit from focusing on connectors and linking phrases to help his writing flow more smoothly.\nDimitry also has good listening and reading skills, and with further consistent practice he is well on track to becoming even more fluent and confident in the language.","correctedTypo":false}],"paceHoursPerMonth":10.22,"forecastFinish":"September 2026"}];
+
+const CEFR_ORDER = ['A1','A2','B1','B1+','B2','C1','C1+','C2'];
+const FULL_MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const SHORT_MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const STANDARD_TARGET = 120;
+const AT_RISK_PACE = 4; // h/month threshold
+const COHORT_SEQ = [];
+for (let m = 4; m <= 12; m++) COHORT_SEQ.push([2025, m]);
+for (let m = 1; m <= 4; m++) COHORT_SEQ.push([2026, m]);
+
+const SKILL_LIST = [
+  { key: 'grammar', label: 'Grammar', cls: 's1' },
+  { key: 'vocabulary', label: 'Vocabulary', cls: 's2' },
+  { key: 'listening', label: 'Listening', cls: 's3' },
+  { key: 'reading', label: 'Reading', cls: 's4' },
+  { key: 'writing', label: 'Writing', cls: 's5' },
+  { key: 'speaking', label: 'Speaking', cls: 's6' },
+];
+
+const CEFR_COLORS = { A2:'#C0392B', B1:'#D4A017', 'B1+':'#C9922A', B2:'#C9922A', C1:'#1E7F5E', C2:'#2D5BE3' };
+function cefrColor(lvl) { return CEFR_COLORS[lvl] || CEFR_COLORS[(lvl||'').replace('+','')] || '#A8A49F'; }
+
+function levelClass(lvl) { if (!lvl) return ''; return 'lvl-' + lvl.replace('+','').toUpperCase(); }
+function levelSortKey(lvl) { const i = CEFR_ORDER.indexOf(lvl); return i === -1 ? 99 : i; }
+function fmtEUR(n) { if (n === null || n === undefined) return '-'; return 'EUR ' + Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+function fmtPct(n, d=1) { if (n === null || n === undefined || isNaN(n)) return '-'; return Number(n).toFixed(d) + '%'; }
+function fmtHours(n) { return (n === null || n === undefined ? 0 : Number(n)).toFixed(2); }
+function escapeHTML(str) { return String(str == null ? '' : str).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function targetOf(s) { return s.targetHours || STANDARD_TARGET; }
+function completionOf(s) { return (s.totalHours || 0) / targetOf(s) * 100; }
+
+function renderSummary() {
+  const total = STUDENTS.length;
+  const active = STUDENTS.filter(s => s.isActive).length;
+  const groupCount = STUDENTS.filter(s => s.isGroup).length;
+  const indHours = STUDENTS.filter(s => !s.isGroup).reduce((a,s) => a + (s.totalHours||0), 0);
+  const indCost = STUDENTS.filter(s => !s.isGroup).reduce((a,s) => a + (s.totalCost||0), 0);
+  const groupHours = STUDENTS.filter(s => s.isGroup).reduce((a,s) => a + (s.totalHours||0), 0);
+  const groupCost = STUDENTS.filter(s => s.isGroup).reduce((a,s) => a + (s.totalCost||0), 0);
+  const totalHours = indHours + groupHours;
+  const totalCost = indCost + groupCost;
+  // At-risk = active learners whose pace < AT_RISK_PACE OR pace null/0
+  const atRisk = STUDENTS.filter(s => s.isActive && (s.paceHoursPerMonth == null || s.paceHoursPerMonth < AT_RISK_PACE)).length;
+  const midtermDone = STUDENTS.filter(s => s.midterm && s.midterm.status === 'completed').length;
+
+  document.getElementById('cohortCount').textContent = total + ' learners';
+  document.getElementById('summaryRow').innerHTML = `
+    <div class="stat-card accent">
+      <div class="stat-label">Total learners</div>
+      <div class="stat-value">${total}</div>
+      <div class="stat-note">${active} active . ${total-active} on hold . ${groupCount} in groups<br>${midtermDone} midterm completed</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Total hours delivered</div>
+      <div class="stat-value">${fmtHours(totalHours)}</div>
+      <div class="stat-note">Academic hours (45 min sessions)</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Midterms completed</div>
+      <div class="stat-value">${midtermDone}</div>
+      <div class="stat-note">Out of ${total} learners</div>
+    </div>
+    <div class="stat-card ${atRisk > 0 ? 'warn' : ''}">
+      <div class="stat-label">At-risk learners</div>
+      <div class="stat-value">${atRisk}</div>
+      <div class="stat-note">Active &amp; pacing below ${AT_RISK_PACE} h/month</div>
+    </div>
+  `;
+}
+
+function renderCEFR() {
+  // Bucket by base level (A2, B1, B2, C1, C2). Treat B1+ as B1, C1+ as C1.
+  const bases = ['A2','B1','B2','C1','C2'];
+  const counts = Object.fromEntries(bases.map(b => [b, 0]));
+  STUDENTS.forEach(s => {
+    const base = (s.level || '').replace('+','').toUpperCase();
+    if (counts[base] !== undefined) counts[base]++;
+  });
+  const total = bases.reduce((a, b) => a + counts[b], 0);
+  const segs = bases.map(b => {
+    const pct = total ? (counts[b] / total * 100) : 0;
+    return `<div class="cefr-seg" style="flex:${counts[b]}; background:${CEFR_COLORS[b]}" title="${b}: ${counts[b]}"></div>`;
+  }).join('');
+  const legend = bases.map(b => `
+    <div class="cefr-legend-item">
+      <span class="cefr-dot" style="background:${CEFR_COLORS[b]}"></span>
+      <span><strong style="color:var(--ink)">${b}</strong> &middot; ${counts[b]} learner${counts[b]===1?'':'s'}</span>
+    </div>`).join('');
+  document.getElementById('cefrCard').innerHTML = `
+    <div class="cefr-card-title">
+      <span>CEFR distribution</span>
+      <span class="cefr-card-sub">${total} learners</span>
+    </div>
+    <div class="cefr-stack">${segs}</div>
+    <div class="cefr-legend">${legend}</div>
+  `;
+}
+
+const COLUMNS = [
+  { key:'name', label:'Learner' },
+  { key:'level', label:'CEFR level' },
+  { key:'totalHours', label:'Hours completed' },
+  { key:'completion', label:'Course completion' },
+  { key:'paceHoursPerMonth', label:'Pace (h / month)' },
+];
+
+let currentLevelFilter = 'all';
+let currentStatusFilter = 'all';
+let currentFormatFilter = 'all';
+let currentMidtermFilter = 'all';
+let currentSort = { key: 'totalHours', dir: -1 };
+
+function renderTableHead() {
+  document.getElementById('tableHead').innerHTML = COLUMNS.map(c => {
+    const isSorted = currentSort.key === c.key;
+    const arrow = isSorted ? (currentSort.dir > 0 ? '▲' : '▼') : '▼';
+    return `<th onclick="sortBy('${c.key}')" class="${isSorted ? 'sorted' : ''}">${c.label}<span class="sort-arrow">${arrow}</span></th>`;
+  }).join('');
+}
+function renderLevelFilters() {
+  const present = new Set();
+  STUDENTS.forEach(s => { const b = (s.level||'').replace('+',''); if (b) present.add(b); });
+  const opts = ['all', ...['A2','B1','B2','C1','C2'].filter(l => present.has(l))];
+  document.getElementById('levelFilters').innerHTML = `<span class="filter-label">Level</span>` +
+    opts.map(o => `<button class="filter-tab ${o === currentLevelFilter ? 'active' : ''}" onclick="setLevelFilter('${o}')">${o === 'all' ? 'All' : o}</button>`).join('');
+}
+function renderStatusFilters() {
+  const opts = [{k:'all',label:'All'},{k:'active',label:'Active'},{k:'paused',label:'On hold'}];
+  document.getElementById('statusFilters').innerHTML = `<span class="filter-label">Status</span>` +
+    opts.map(o => `<button class="filter-tab ${o.k === currentStatusFilter ? 'active' : ''}" onclick="setStatusFilter('${o.k}')">${o.label}</button>`).join('');
+}
+function renderMidtermFilters() {
+  const opts = [{k:'all',label:'All'},{k:'done',label:'Completed'},{k:'pending',label:'Pending'}];
+  document.getElementById('midtermFilters').innerHTML = `<span class="filter-label">Midterm</span>` +
+    opts.map(o => `<button class="filter-tab ${o.k === currentMidtermFilter ? 'active' : ''}" onclick="setMidtermFilter('${o.k}')">${o.label}</button>`).join('');
+}
+function renderFormatFilters() {
+  const hasGroup = STUDENTS.some(s => s.isGroup);
+  if (!hasGroup) { document.getElementById('formatFilters').innerHTML = ''; return; }
+  const opts = [{k:'all',label:'All'},{k:'individual',label:'Individual'},{k:'group',label:'Group'}];
+  document.getElementById('formatFilters').innerHTML = `<span class="filter-label">Format</span>` +
+    opts.map(o => `<button class="filter-tab ${o.k === currentFormatFilter ? 'active' : ''}" onclick="setFormatFilter('${o.k}')">${o.label}</button>`).join('');
+}
+
+function setLevelFilter(f) { currentLevelFilter = f; renderLevelFilters(); applyFilters(); }
+function setStatusFilter(f) { currentStatusFilter = f; renderStatusFilters(); applyFilters(); }
+function setFormatFilter(f) { currentFormatFilter = f; renderFormatFilters(); applyFilters(); }
+function setMidtermFilter(f) { currentMidtermFilter = f; renderMidtermFilters(); applyFilters(); }
+function sortBy(key) {
+  if (currentSort.key === key) currentSort.dir *= -1;
+  else { currentSort.key = key; currentSort.dir = key === 'name' ? 1 : -1; }
+  renderTableHead(); applyFilters();
+}
+function resetView() {
+  currentLevelFilter = 'all'; currentStatusFilter = 'all'; currentFormatFilter = 'all'; currentMidtermFilter = 'all';
+  currentSort = { key: 'totalHours', dir: -1 };
+  document.getElementById('searchInput').value = '';
+  renderFormatFilters(); renderLevelFilters(); renderStatusFilters(); renderMidtermFilters(); renderTableHead(); applyFilters();
+}
+
+function applyFilters() {
+  const query = (document.getElementById('searchInput').value || '').toLowerCase().trim();
+  let data = STUDENTS.map(s => ({ ...s, completion: completionOf(s) }));
+  if (currentFormatFilter === 'individual') data = data.filter(e => !e.isGroup);
+  else if (currentFormatFilter === 'group') data = data.filter(e => e.isGroup);
+  if (currentLevelFilter !== 'all') data = data.filter(e => (e.level || '').replace('+','') === currentLevelFilter);
+  if (currentStatusFilter === 'active') data = data.filter(e => e.isActive);
+  else if (currentStatusFilter === 'paused') data = data.filter(e => !e.isActive);
+  if (currentMidtermFilter === 'done') data = data.filter(e => e.midterm && e.midterm.status === 'completed');
+  else if (currentMidtermFilter === 'pending') data = data.filter(e => !(e.midterm && e.midterm.status === 'completed'));
+  if (query) data = data.filter(e => (e.name||'').toLowerCase().includes(query) || (e.teacher||'').toLowerCase().includes(query) || (e.groupName||'').toLowerCase().includes(query));
+
+  if (currentSort.key) {
+    data.sort((a,b) => {
+      let va = a[currentSort.key], vb = b[currentSort.key];
+      if (currentSort.key === 'level') { va = levelSortKey(a.level); vb = levelSortKey(b.level); }
+      if (va == null && vb == null) return 0;
+      if (va == null) return 1;
+      if (vb == null) return -1;
+      if (typeof va === 'string') return va.localeCompare(vb) * currentSort.dir;
+      return ((Number(va)||0) - (Number(vb)||0)) * currentSort.dir;
+    });
+  }
+
+  document.getElementById('shownCount').textContent = `${data.length} of ${STUDENTS.length} learners`;
+  const tbody = document.getElementById('tableBody');
+  if (!data.length) {
+    tbody.innerHTML = `<tr><td colspan="${COLUMNS.length}" style="text-align:center; padding:32px; color:var(--ink-muted);">No learners match the current filters</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = data.map(e => {
+    const tgt = targetOf(e);
+    const c = Math.min(100, e.completion);
+    const subParts = [];
+    if (e.isGroup) subParts.push(`<span class="group-pill">${escapeHTML(e.groupName || 'Group')}</span>`);
+    if (e.midterm && e.midterm.status === 'completed') {
+      const mpct = Math.round((e.midterm.percentage || 0) * 100);
+      subParts.push(`<span class="midterm-pill" title="Midterm completed - ${mpct}%"><span class="check">✓</span> Midterm <span class="pct">${mpct}%</span></span>`);
+    }
+    if (e.teacher) subParts.push(`<span>Teacher: ${escapeHTML(e.teacher)}</span>`);
+    if (e.startMonthLabel) subParts.push(`<span>Since ${escapeHTML(e.startMonthLabel)}</span>`);
+
+    // Pace cell
+    let paceHtml;
+    if (!e.isActive) {
+      paceHtml = `<span class="pace-cell dash">-</span>`;
+    } else if (e.paceHoursPerMonth == null || e.paceHoursPerMonth === 0) {
+      paceHtml = `<span class="pace-cell at-risk"><span class="pace-val">0</span><span class="pace-forecast">No recent activity</span></span>`;
+    } else {
+      const risk = e.paceHoursPerMonth < AT_RISK_PACE ? 'at-risk' : 'healthy';
+      paceHtml = `<span class="pace-cell ${risk}"><span class="pace-val num-mono">${e.paceHoursPerMonth.toFixed(2)}</span><span class="pace-forecast">Forecast: ${escapeHTML(e.forecastFinish || '-')}</span></span>`;
+    }
+
+    return `
+      <tr class="${e.isActive ? '' : 'is-paused'}" onclick="openDetail('${encodeURIComponent(e.name)}')">
+        <td>
+          <div class="employee-name">
+            <span class="employee-status-dot ${e.isActive ? '' : 'paused'}" title="${e.isActive ? 'Active' : 'On hold'}"></span>
+            ${escapeHTML(e.name)}${e.isActive ? '' : ' <span class="ink-soft" style="font-size:11px;">(on hold)</span>'}
+          </div>
+          ${subParts.length ? `<div class="employee-sub">${subParts.join('<span style="color:var(--border)">·</span>')}</div>` : ''}
+        </td>
+        <td><span class="level-badge ${levelClass(e.level)}">${escapeHTML(e.level || 'N/A')}</span></td>
+        <td class="num-mono">${fmtHours(e.totalHours)} <span class="ink-soft" style="font-size:11px;">/ ${tgt}</span></td>
+        <td><div class="pct-cell"><div class="pct-bar"><div class="pct-fill" style="width:${c}%"></div></div><span class="num-mono" style="font-size:12px;">${fmtPct(e.completion)}</span></div></td>
+        <td>${paceHtml}</td>
+      </tr>`;
+  }).join('');
+}
+
+let chartInstance = null;
+function openDetail(encodedName) {
+  const name = decodeURIComponent(encodedName);
+  const s = STUDENTS.find(x => x.name === name);
+  if (!s) return;
+  renderDetail(s);
+  document.getElementById('listView').style.display = 'none';
+  document.getElementById('moneyView').classList.remove('active');
+  document.getElementById('detailView').classList.add('active');
+  window.scrollTo({top:0, behavior:'instant'});
+}
+function goBack() {
+  document.getElementById('detailView').classList.remove('active');
+  document.getElementById('listView').style.display = '';
+  document.getElementById('listView').classList.remove('hidden');
+  if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
+  // Restore current tab's primary view
+  if (currentTab === 'money') {
+    document.getElementById('listView').style.display = 'none';
+    document.getElementById('moneyView').classList.add('active');
+  }
+  window.scrollTo({top:0, behavior:'instant'});
+}
+
+function buildChartRange(s) {
+  const sy = s.startYear || 2025;
+  const sm = s.startMonth || 5;
+  const arr = [];
+  for (const [y, m] of COHORT_SEQ) {
+    if (y < sy || (y === sy && m < sm)) continue;
+    arr.push([y, m]);
+  }
+  return arr;
+}
+
+function renderDetail(s) {
+  const tgt = targetOf(s);
+  const placement = (s.progress && s.progress.recommendedLevel) || 'N/A';
+  const startLabel = (s.progress && s.progress.courseStartMonthLabel) || s.startMonthLabel || 'N/A';
+  // Finish date logic
+  let endHtml;
+  if (!s.isActive) {
+    endHtml = `<span class="muted-tag">Not set yet</span>`;
+  } else if (s.progress && s.progress.courseEndIsSet && s.progress.courseEndDateLabel) {
+    const tag = s.progress.courseEndApproximate ? ' <span class="approx-tag">(approximate)</span>' : '';
+    endHtml = escapeHTML(s.progress.courseEndDateLabel) + tag;
+  } else {
+    endHtml = `<span class="muted-tag">Not set yet</span>`;
+  }
+  const courseType = (s.progress && s.progress.courseType) || 'N/A';
+  const currentLevel = (s.midterm && s.midterm.details && (s.midterm.details.cefrLevel || s.midterm.details.currentLevel)) ||
+                       (s.progress && s.progress.courseLevelDetails) || s.level || 'N/A';
+  const totalHours = fmtHours(s.totalHours);
+  const completion = completionOf(s).toFixed(1);
+  const subPills = [];
+  if (s.isGroup) subPills.push(`<span class="group-pill">${escapeHTML(s.groupName || 'Group')}</span>`);
+  if (s.teacher) subPills.push(`Teacher: ${escapeHTML(s.teacher)}`);
+
+  // Pace block (only for active)
+  let paceBlockHtml = '';
+  if (s.isActive && s.paceHoursPerMonth != null) {
+    const risk = s.paceHoursPerMonth < AT_RISK_PACE ? 'warn' : 'ok';
+    paceBlockHtml = `
+      <div class="pace-block-grid">
+        <div class="pace-block ${risk}">
+          <div class="label">Recent pace</div>
+          <div class="value">${s.paceHoursPerMonth.toFixed(2)}<span class="of"> h / month</span></div>
+        </div>
+        <div class="pace-block">
+          <div class="label">Forecast finish</div>
+          <div class="value small">${escapeHTML(s.forecastFinish || 'No recent activity')}</div>
+        </div>
+        <div class="pace-block">
+          <div class="label">Hours remaining</div>
+          <div class="value">${Math.max(0, tgt - s.totalHours).toFixed(2)}<span class="of"> / ${tgt}</span></div>
+        </div>
+      </div>`;
+  }
+
+  document.getElementById('detailHero').innerHTML = `
+    <div>
+      <h1>${escapeHTML(s.name)}</h1>
+      <div class="sub">${subPills.join('<span style="color:var(--border)">·</span>')}</div>
+      <div class="detail-meta-grid">
+        <div class="meta-block"><div class="meta-block-label">${s.isGroup ? 'Current Level (entry)' : 'Placement Level'}</div><div class="meta-block-value">${escapeHTML(placement)}</div></div>
+        <div class="meta-block"><div class="meta-block-label">Course Start</div><div class="meta-block-value">${escapeHTML(startLabel)}</div></div>
+        <div class="meta-block"><div class="meta-block-label">Course Type</div><div class="meta-block-value">${escapeHTML(courseType)}</div></div>
+        <div class="meta-block"><div class="meta-block-label">Course Level</div><div class="meta-block-value">${escapeHTML(currentLevel)}</div></div>
+        <div class="meta-block"><div class="meta-block-label">Expected Finish</div><div class="meta-block-value">${endHtml}</div></div>
+        <div class="meta-block"><div class="meta-block-label">Status</div><div class="meta-block-value">${s.isActive ? '<span class="green-text">Active</span>' : '<span class="ink-soft">On hold</span>'}</div></div>
+      </div>
+      ${s.progress && s.progress.willComplete ? `
+        <div class="will-complete-block">
+          <div class="icon">?</div>
+          <div class="text"><span class="label">Will the learner complete the current level in the remaining 60 academic hours?</span><br><strong>${escapeHTML(s.progress.willComplete)}</strong></div>
+        </div>` : ''}
+      ${paceBlockHtml}
+    </div>
+    <div style="text-align:right; min-width:200px;">
+      <span class="level-badge ${levelClass(s.level)}" style="font-size:14px; padding:6px 14px;">${escapeHTML(s.level || 'N/A')}</span>
+      <div style="font-family:'DM Serif Display', serif; font-size:42px; line-height:1.1; margin-top:14px;">${totalHours}</div>
+      <div style="font-size:12px; color:var(--ink-muted); margin-bottom:14px;">${s.isGroup ? 'group hours' : 'hours'} of ${tgt}</div>
+      <div class="progress-bar-wrap" style="max-width:200px; margin-left:auto;">
+        <div class="progress-bar-track"><div class="progress-bar-fill" style="width:${Math.min(100,completion)}%"></div></div>
+        <div class="progress-bar-meta"><span>0</span><span>${completion}%</span><span>${tgt}</span></div>
+      </div>
+    </div>
+  `;
+
+  const range = buildChartRange(s);
+  const labels = range.map(([y, m]) => `${SHORT_MONTHS[m-1]} ${String(y).slice(2)}`);
+  const data = range.map(([y, m]) => Number(s.monthlyAttendance[FULL_MONTHS[m-1]] || 0));
+  const allZero = data.every(v => v === 0);
+  const chartWrap = document.getElementById('chartWrap');
+  if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
+  if (allZero || !range.length) {
+    chartWrap.innerHTML = `<div class="chart-empty">No attendance data available for this period</div>`;
+  } else {
+    chartWrap.innerHTML = '<canvas id="progressChart"></canvas>';
+    const ctx = document.getElementById('progressChart').getContext('2d');
+    chartInstance = new Chart(ctx, {
+      type: 'line',
+      data: { labels, datasets: [{
+        label: s.isGroup ? 'Group academic hours' : 'Academic hours',
+        data,
+        borderColor: '#2D5BE3', backgroundColor: 'rgba(45, 91, 227, 0.08)',
+        borderWidth: 2.5, fill: true, tension: 0.35,
+        pointBackgroundColor: '#2D5BE3', pointBorderColor: '#FFFFFF',
+        pointBorderWidth: 2, pointRadius: 5, pointHoverRadius: 7,
+      }]},
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: '#1A1814',
+            titleFont: { family: "'DM Sans', sans-serif", size: 12 },
+            bodyFont: { family: "'DM Sans', sans-serif", size: 13, weight: '500' },
+            padding: 10, displayColors: false,
+            callbacks: { label: (ctx) => `${ctx.parsed.y.toFixed(2)} academic hours` }
+          }
+        },
+        scales: {
+          x: { grid: { display: false }, ticks: { color: '#6B6760', font: { family: "'DM Sans', sans-serif", size: 12 } } },
+          y: { beginAtZero: true, grid: { color: '#E8E4DE', drawBorder: false },
+               ticks: { color: '#6B6760', font: { family: "'DM Sans', sans-serif", size: 12 }, callback: v => v + ' h' } }
+        }
+      }
+    });
+  }
+
+  renderMidterm(s);
+  renderHistory(s);
+  renderProgressSummary(s);
+}
+
+function renderMidterm(s) {
+  const el = document.getElementById('midtermSection');
+  if (!(s.midterm && s.midterm.status === 'completed')) {
+    el.innerHTML = `
+      <div class="midterm-status"><span class="status-badge not-taken">Midterm test not yet taken</span></div>
+      <div class="midterm-not-taken-note">
+        This learner will take the midterm assessment after completing approximately <strong>60 academic hours</strong> of the course.
+        Current progress: <strong>${fmtHours(s.totalHours)} hours</strong> (${completionOf(s).toFixed(1)}% of the course).
+      </div>`;
+    return;
+  }
+  const pct = Math.round((s.midterm.percentage || 0) * 100);
+  if (s.midterm.type === 'group') {
+    const d = s.midterm.details || {};
+    const skillsHtml = SKILL_LIST.map(sk => {
+      const v = d[sk.key];
+      if (v === null || v === undefined) return '';
+      const w = Math.round(v * 100);
+      return `
+        <div class="skill-row">
+          <div class="skill-row-head"><span class="skill-row-label">${sk.label}</span><span class="skill-row-value">${w}%</span></div>
+          <div class="skill-track"><div class="skill-fill ${sk.cls}" style="width:${w}%"></div></div>
+        </div>`;
+    }).join('');
+    el.innerHTML = `
+      <div class="midterm-status">
+        <span class="status-badge completed">Group midterm - ${pct}% overall</span>
+        <button class="toggle-button" onclick="toggleMidterm()">View skill breakdown</button>
+      </div>
+      <div class="midterm-details" id="midtermDetails">
+        <div class="badge-pair">
+          ${d.motivation != null ? `<div class="small-stat"><div class="label">Motivation</div><div class="value">${d.motivation}<span class="of"> / 5</span></div></div>` : ''}
+          ${d.selfStudy != null ? `<div class="small-stat"><div class="label">Self study</div><div class="value">${d.selfStudy}<span class="of"> / 5</span></div></div>` : ''}
+        </div>
+        <div class="midterm-section-title" style="margin-bottom:12px;">Skill breakdown</div>
+        <div class="skill-grid">${skillsHtml}</div>
+        ${d.comment ? `<div class="midterm-section">
+          <div class="midterm-section-title">Teacher comment</div>
+          <div class="midterm-section-text">${escapeHTML(d.comment)}</div>
+        </div>` : ''}
+      </div>`;
+    return;
+  }
+  const det = s.midterm.details || {};
+  el.innerHTML = `
+    <div class="midterm-status">
+      <span class="status-badge completed">Midterm completed - ${pct}%</span>
+      <button class="toggle-button" onclick="toggleMidterm()">View detailed results</button>
+    </div>
+    <div class="midterm-details" id="midtermDetails">
+      ${det.vocabularyGrammar ? `<div class="midterm-section"><div class="midterm-section-title">Vocabulary &amp; Grammar</div><div class="midterm-section-text">${escapeHTML(det.vocabularyGrammar)}</div></div>` : ''}
+      ${det.receptiveSkills ? `<div class="midterm-section"><div class="midterm-section-title">Receptive Skills (Reading / Listening)</div><div class="midterm-section-text">${escapeHTML(det.receptiveSkills)}</div></div>` : ''}
+      ${det.productiveSkills ? `<div class="midterm-section"><div class="midterm-section-title">Productive Skills (Speaking / Writing)</div><div class="midterm-section-text">${escapeHTML(det.productiveSkills)}</div></div>` : ''}
+      ${det.attendance ? `<div class="midterm-section"><div class="midterm-section-title">Attendance &amp; Homework</div><div class="midterm-section-text">${escapeHTML(det.attendance)}</div></div>` : ''}
+      ${det.cefrLevel ? `<div class="midterm-section"><div class="midterm-section-title">CEFR Level Summary</div><div class="midterm-section-text">${escapeHTML(det.cefrLevel)}</div></div>` : ''}
+    </div>`;
+}
+
+function toggleMidterm() {
+  const el = document.getElementById('midtermDetails');
+  if (!el) return;
+  el.classList.toggle('open');
+  const btn = el.previousElementSibling.querySelector('.toggle-button');
+  if (!btn) return;
+  const isOpen = el.classList.contains('open');
+  if (btn.textContent.toLowerCase().includes('skill')) {
+    btn.textContent = isOpen ? 'Hide skill breakdown' : 'View skill breakdown';
+  } else {
+    btn.textContent = isOpen ? 'Hide detailed results' : 'View detailed results';
+  }
+}
+
+function renderHistory(s) {
+  const el = document.getElementById('historySection');
+  if (!s.history || !s.history.length) { el.innerHTML = ''; return; }
+  el.innerHTML = s.history.map((h, idx) => {
+    const overall = Math.round((h.finalOverallPct || 0) * 100);
+    const skillsHtml = SKILL_LIST.map(sk => {
+      const v = h.finalSkills ? h.finalSkills[sk.key] : null;
+      if (v == null) return '';
+      const w = Math.round(v * 100);
+      return `
+        <div class="skill-row">
+          <div class="skill-row-head"><span class="skill-row-label">${sk.label}</span><span class="skill-row-value">${w}%</span></div>
+          <div class="skill-track"><div class="skill-fill history" style="width:${w}%"></div></div>
+        </div>`;
+    }).join('');
+    const detailsId = 'historyDetails_' + idx;
+    return `
+      <div class="detail-card">
+        <h2>Course history: ${escapeHTML(h.courseLevel || h.courseName || 'Previous course')}</h2>
+        <div class="history-header">
+          <span class="status-badge history">Course completed - ${overall}% final</span>
+          <button class="toggle-button secondary" onclick="toggleHistory('${detailsId}', this)">View final test breakdown</button>
+        </div>
+        <div class="history-meta-grid">
+          <div class="history-meta"><div class="lbl">Course</div>${escapeHTML(h.courseName || '-')}</div>
+          <div class="history-meta"><div class="lbl">Group / Teacher</div>${escapeHTML(h.groupName || '-')} . ${escapeHTML(h.groupTeacher || '-')}</div>
+          <div class="history-meta"><div class="lbl">Start</div>${escapeHTML(h.startDateLabel || '-')}</div>
+          <div class="history-meta"><div class="lbl">End</div>${escapeHTML(h.endDateLabel || '-')}</div>
+          <div class="history-meta"><div class="lbl">Hours completed</div>${fmtHours(h.totalHours)} / 120</div>
+          ${h.endLevel ? `<div class="history-meta"><div class="lbl">Level at end of course</div>${escapeHTML(h.endLevel)}</div>` : ''}
+          ${h.recommendedNext ? `<div class="history-meta"><div class="lbl">Recommended next course</div>${escapeHTML(h.recommendedNext)}</div>` : ''}
+        </div>
+        <div class="midterm-details open" id="${detailsId}" style="display:none;">
+          <div class="badge-pair">
+            ${h.finalMotivation != null ? `<div class="small-stat"><div class="label">Final Motivation</div><div class="value">${h.finalMotivation}<span class="of"> / 5</span></div></div>` : ''}
+            ${h.finalSelfStudy != null ? `<div class="small-stat"><div class="label">Final Self study</div><div class="value">${h.finalSelfStudy}<span class="of"> / 5</span></div></div>` : ''}
+          </div>
+          <div class="midterm-section-title" style="margin-bottom:12px;">Final test skill breakdown</div>
+          <div class="skill-grid">${skillsHtml}</div>
+          ${h.comment ? `<div class="midterm-section">
+            <div class="midterm-section-title">Teacher final comment</div>
+            <div class="midterm-section-text">${escapeHTML(h.comment)}</div>
+          </div>` : ''}
+          ${h.correctedTypo ? `<div class="typo-footnote">* Final motivation and self-study were recorded as 0.05/0.05 in the source spreadsheet (apparent typo); displayed as 5/5 to match the midterm scores and Dmitry's identical entry.</div>` : ''}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function toggleHistory(id, btn) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const isOpen = el.style.display !== 'none';
+  el.style.display = isOpen ? 'none' : 'block';
+  btn.textContent = isOpen ? 'View final test breakdown' : 'Hide final test breakdown';
+}
+
+function renderProgressSummary(s) {
+  const el = document.getElementById('progressSummary');
+  const tgt = targetOf(s);
+  let summary;
+  if (s.name === 'Alexander Shatalin') {
+    summary = 'Alexander demonstrates developing control of C1 structures. Shows strong receptive skills and fluent communication with minor grammatical errors in spontaneous speech.';
+  } else if (s.name === 'Alexander Machugovskiy') {
+    summary = 'Sasha shows strong B1+ speaking skills with good fluency. Midterm results show 84% completion with excellent attendance and engagement.';
+  } else if (s.isGroup && s.midterm && s.midterm.status === 'completed') {
+    const pct = Math.round((s.midterm.percentage||0)*100);
+    const mot = s.midterm.details.motivation, ss = s.midterm.details.selfStudy;
+    summary = `Group learner in ${s.groupName || 'Group1'} with ${s.teacher || 'Kevin'}. Current B1 midterm overall: ${pct}% across six skills. Motivation and self-study scored ${mot}/5 and ${ss}/5.`;
+  } else if (s.progress) {
+    summary = 'Currently progressing through the course. Midterm assessment will be available after completing approximately 60 academic hours.';
+  } else {
+    summary = 'No detailed assessment data available for this learner yet. Once placement and midterm records are completed, this section will be populated.';
+  }
+  const completion = completionOf(s).toFixed(1);
+  const lines = [
+    `<div class="summary-line">${escapeHTML(summary)}</div>`,
+    `<div class="summary-line"><span class="ink-soft">${s.isGroup ? 'Group progress:' : 'Course progress:'}</span> <span class="accent-text">${fmtHours(s.totalHours)} / ${tgt} academic hours (${completion}%)</span></div>`,
+  ];
+  if (s.isActive && s.paceHoursPerMonth != null) {
+    const risk = s.paceHoursPerMonth < AT_RISK_PACE ? '<span style="color:var(--red); font-weight:500;">below pace</span>' : '<span class="green-text">on pace</span>';
+    lines.push(`<div class="summary-line"><span class="ink-soft">Recent pace:</span> ${s.paceHoursPerMonth.toFixed(2)} h/month (${risk}). Forecast finish: <strong>${escapeHTML(s.forecastFinish || '-')}</strong>.</div>`);
+  }
+  if (s.midterm && s.midterm.status === 'completed') {
+    lines.push(`<div class="summary-line"><span class="green-text">Midterm performance shows strong progress toward next level.</span></div>`);
+  }
+  if (s.history && s.history.length) {
+    const h = s.history[0];
+    const finalPct = Math.round((h.finalOverallPct||0)*100);
+    lines.push(`<div class="summary-line"><span class="ink-soft">Previous course (${escapeHTML(h.courseLevel||'')}):</span> completed ${escapeHTML(h.startDateLabel||'')} to ${escapeHTML(h.endDateLabel||'')} with <strong>${finalPct}% final result</strong>.</div>`);
+  }
+  if (s.progress && s.progress.willComplete) {
+    lines.push(`<div class="summary-line"><span class="ink-soft">Forecast (60 ac.h. remaining):</span> <strong>${escapeHTML(s.progress.willComplete)}</strong></div>`);
+  }
+  el.innerHTML = `<div class="progress-summary">${lines.join('')}</div>`;
+}
+
+function renderAll() {
+  renderSummary(); renderCEFR(); renderFormatFilters(); renderLevelFilters(); renderStatusFilters(); renderMidtermFilters(); renderTableHead(); applyFilters();
+  renderMoneyAll();
+}
+
+// ============================================================
+// TABS
+// ============================================================
+let currentTab = 'list';
+function switchTab(tab) {
+  currentTab = tab;
+  // Always return from detail view when switching tabs
+  if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
+  document.getElementById('detailView').classList.remove('active');
+  document.getElementById('listView').classList.remove('hidden');
+  document.getElementById('listView').style.display = (tab === 'list') ? '' : 'none';
+  document.getElementById('moneyView').classList.toggle('active', tab === 'money');
+  document.getElementById('tabBtnList').classList.toggle('active', tab === 'list');
+  document.getElementById('tabBtnMoney').classList.toggle('active', tab === 'money');
+  window.scrollTo({top:0, behavior:'instant'});
+}
+
+// ============================================================
+// MONEY VIEW
+// ============================================================
+let moneyFormatFilter = 'all';
+let moneySort = { key: 'totalCost', dir: -1 };
+
+function setMoneyFormatFilter(f) { moneyFormatFilter = f; renderMoneyFormatFilters(); renderMoneyTable(); }
+function moneySortBy(key) {
+  if (moneySort.key === key) moneySort.dir *= -1;
+  else { moneySort.key = key; moneySort.dir = key === 'name' ? 1 : -1; }
+  renderMoneyTableHead(); renderMoneyTable();
+}
+
+function spendPaceOf(s) {
+  if (!s.isActive || s.paceHoursPerMonth == null) return null;
+  // For group learners the spend pace is shared across the group - just use the per-hour rate
+  return s.paceHoursPerMonth * (s.pricePerHour || 30);
+}
+function projectedRemaining(s) {
+  // For groups, compute against billing hours (group total), not per-student attendance
+  const tgt = targetOf(s);
+  const ref = s.isGroup ? (s.groupBillingHours || s.totalHours || 0) : (s.totalHours || 0);
+  const remaining = Math.max(0, tgt - ref);
+  return remaining * (s.pricePerHour || 30);
+}
+function costPerCompletedHour(s) {
+  // For groups use group billing hours so cost/h equals the agreed rate (e.g. 1797.93 / 66.59 = 27.00)
+  const hrs = s.isGroup ? (s.groupBillingHours || s.totalHours) : s.totalHours;
+  if (!hrs) return null;
+  return s.totalCost / hrs;
+}
+
+function renderMoneySummary() {
+  const total = STUDENTS.length;
+  const indCost = STUDENTS.filter(s => !s.isGroup).reduce((a,s) => a + (s.totalCost||0), 0);
+  // Group cost is per-group, not per-student. Count each unique groupName once.
+  const seenGroups = new Set();
+  let groupCost = 0;
+  let groupBillingHours = 0;
+  STUDENTS.filter(s => s.isGroup).forEach(s => {
+    if (s.groupName && !seenGroups.has(s.groupName)) {
+      seenGroups.add(s.groupName);
+      groupCost += s.totalCost || 0;
+      groupBillingHours += s.groupBillingHours || s.totalHours || 0;
+    }
+  });
+  const indHours = STUDENTS.filter(s => !s.isGroup).reduce((a,s) => a + (s.totalHours||0), 0);
+  const totalCost = indCost + groupCost;
+  const totalHoursBilled = indHours + groupBillingHours;
+  const avgPerLearner = total ? totalCost / total : 0;
+  // Projected remaining for active learners only (dedupe groups by groupName)
+  const seenForProj = new Set();
+  const projectedRest = STUDENTS.filter(s => s.isActive).reduce((a,s) => {
+    if (s.isGroup) {
+      if (s.groupName && seenForProj.has(s.groupName)) return a;
+      if (s.groupName) seenForProj.add(s.groupName);
+    }
+    return a + projectedRemaining(s);
+  }, 0);
+
+  document.getElementById('moneySummaryRow').innerHTML = `
+    <div class="stat-card accent">
+      <div class="stat-label">Total invested YTD</div>
+      <div class="stat-value">${fmtEUR(totalCost).replace('.00','')}</div>
+      <div class="stat-note">Across ${total} learners</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Avg cost per learner</div>
+      <div class="stat-value">${fmtEUR(avgPerLearner).replace('.00','')}</div>
+      <div class="stat-note">YTD spend / cohort size</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Cost per delivered hour</div>
+      <div class="stat-value">EUR ${totalHoursBilled ? (totalCost/totalHoursBilled).toFixed(2) : '-'}</div>
+      <div class="stat-note">Blended rate (ind + group)</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Projected to completion</div>
+      <div class="stat-value">${fmtEUR(projectedRest).replace('.00','')}</div>
+      <div class="stat-note">Remaining target hours × rate</div>
+    </div>
+  `;
+}
+
+function renderCostSplit() {
+  const indCost = STUDENTS.filter(s => !s.isGroup).reduce((a,s) => a + (s.totalCost||0), 0);
+  // Dedupe group cost by groupName (billed per group, not per student)
+  const seenGroups = new Set();
+  let groupCost = 0;
+  STUDENTS.filter(s => s.isGroup).forEach(s => {
+    if (s.groupName && !seenGroups.has(s.groupName)) { seenGroups.add(s.groupName); groupCost += s.totalCost || 0; }
+  });
+  const total = indCost + groupCost;
+  const indPct = total ? (indCost / total * 100) : 0;
+  const grpPct = total ? (groupCost / total * 100) : 0;
+  document.getElementById('costSplitCard').innerHTML = `
+    <div class="cefr-card-title">
+      <span>Cost split: Individual vs Group lessons</span>
+      <span class="cefr-card-sub">${fmtEUR(total).replace('.00','')} total</span>
+    </div>
+    <div class="cost-split-bar">
+      <div class="seg ind" style="flex:${indCost}"></div>
+      <div class="seg grp" style="flex:${groupCost}"></div>
+    </div>
+    <div class="cost-split-legend">
+      <div><span class="swatch ind"></span> <strong>Individual lessons</strong> &middot; ${fmtEUR(indCost).replace('.00','')} (${indPct.toFixed(1)}%) at EUR 30/h</div>
+      <div><span class="swatch grp"></span> <strong>Group lessons</strong> &middot; ${fmtEUR(groupCost).replace('.00','')} (${grpPct.toFixed(1)}%) at EUR 27/h</div>
+    </div>
+    <div class="money-disclaimer">Group lessons are billed per group at EUR 27 per academic hour delivered to the group as a whole (not per student). Group totals are counted once, even when multiple members are listed in the table below.</div>
+  `;
+}
+
+const MONEY_COLUMNS = [
+  { key:'name', label:'Learner' },
+  { key:'totalHours', label:'Hours' },
+  { key:'pricePerHour', label:'EUR / hour' },
+  { key:'totalCost', label:'Total spend (EUR)' },
+  { key:'costPerHour', label:'Cost / delivered h' },
+  { key:'spendPace', label:'Spend pace (EUR / month)' },
+  { key:'projectedRem', label:'Projected remaining' },
+];
+
+function renderMoneyTableHead() {
+  document.getElementById('moneyTableHead').innerHTML = MONEY_COLUMNS.map(c => {
+    const isSorted = moneySort.key === c.key;
+    const arrow = isSorted ? (moneySort.dir > 0 ? '▲' : '▼') : '▼';
+    return `<th onclick="moneySortBy('${c.key}')" class="${isSorted ? 'sorted' : ''}">${c.label}<span class="sort-arrow">${arrow}</span></th>`;
+  }).join('');
+}
+function renderMoneyFormatFilters() {
+  const hasGroup = STUDENTS.some(s => s.isGroup);
+  if (!hasGroup) { document.getElementById('moneyFormatFilters').innerHTML = ''; return; }
+  const opts = [{k:'all',label:'All'},{k:'individual',label:'Individual'},{k:'group',label:'Group'}];
+  document.getElementById('moneyFormatFilters').innerHTML = `<span class="filter-label">Format</span>` +
+    opts.map(o => `<button class="filter-tab ${o.k === moneyFormatFilter ? 'active' : ''}" onclick="setMoneyFormatFilter('${o.k}')">${o.label}</button>`).join('');
+}
+
+function renderMoneyTable() {
+  const query = (document.getElementById('moneySearchInput').value || '').toLowerCase().trim();
+  let data = STUDENTS.map(s => ({ ...s,
+    costPerHour: costPerCompletedHour(s),
+    spendPace: spendPaceOf(s),
+    projectedRem: s.isActive ? projectedRemaining(s) : 0,
+  }));
+  if (moneyFormatFilter === 'individual') data = data.filter(e => !e.isGroup);
+  else if (moneyFormatFilter === 'group') data = data.filter(e => e.isGroup);
+  if (query) data = data.filter(e => (e.name||'').toLowerCase().includes(query));
+
+  if (moneySort.key) {
+    data.sort((a,b) => {
+      let va = a[moneySort.key], vb = b[moneySort.key];
+      if (va == null && vb == null) return 0;
+      if (va == null) return 1;
+      if (vb == null) return -1;
+      if (typeof va === 'string') return va.localeCompare(vb) * moneySort.dir;
+      return ((Number(va)||0) - (Number(vb)||0)) * moneySort.dir;
+    });
+  }
+
+  document.getElementById('moneyShownCount').textContent = `${data.length} of ${STUDENTS.length} learners`;
+  const tbody = document.getElementById('moneyTableBody');
+  if (!data.length) { tbody.innerHTML = `<tr><td colspan="${MONEY_COLUMNS.length}" style="text-align:center; padding:32px; color:var(--ink-muted);">No learners match</td></tr>`; return; }
+  tbody.innerHTML = data.map(e => `
+    <tr class="${e.isActive ? '' : 'is-paused'}">
+      <td>
+        <div class="employee-name">
+          <span class="employee-status-dot ${e.isActive ? '' : 'paused'}"></span>
+          ${escapeHTML(e.name)}${e.isActive ? '' : ' <span class="ink-soft" style="font-size:11px;">(on hold)</span>'}
+        </div>
+        <div class="employee-sub">
+          ${e.isGroup ? `<span class="group-pill">${escapeHTML(e.groupName || 'Group')}</span>` : '<span>Individual</span>'}
+        </div>
+      </td>
+      <td class="num-cell">${fmtHours(e.totalHours)}</td>
+      <td class="num-cell">EUR ${Math.round(e.pricePerHour)}</td>
+      <td class="num-cell"><strong>${fmtEUR(e.totalCost).replace('.00','')}</strong>${e.isGroup ? ' <span class="ink-soft" style="font-size:10px; font-weight:400;">(group total)</span>' : ''}</td>
+      <td class="num-cell">${e.costPerHour != null ? 'EUR ' + e.costPerHour.toFixed(2) : '-'}</td>
+      <td class="num-cell">${e.spendPace != null ? fmtEUR(e.spendPace).replace('.00','') : '<span class="ink-soft">-</span>'}</td>
+      <td class="num-cell">${e.isActive ? fmtEUR(e.projectedRem).replace('.00','') : '<span class="ink-soft">-</span>'}</td>
+    </tr>`).join('');
+}
+
+function renderMoneyAll() {
+  renderMoneySummary();
+  renderCostSplit();
+  renderMoneyFormatFilters();
+  renderMoneyTableHead();
+  renderMoneyTable();
+}
+
+renderAll();
+</script>
+</body>
+</html>
