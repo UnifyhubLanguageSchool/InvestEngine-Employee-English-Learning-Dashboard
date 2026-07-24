@@ -1106,15 +1106,20 @@ function toggleHistory(id, btn) {
 function renderProgressSummary(s) {
   const el = document.getElementById('progressSummary');
   const tgt = targetOf(s);
+  const firstName = (s.name || '').split(' ')[0];
   let summary;
   if (s.name === 'Alexander Shatalin') {
-    summary = 'Alexander demonstrates developing control of C1 structures. Shows strong receptive skills and fluent communication with minor grammatical errors in spontaneous speech.';
+    summary = 'Alexander demonstrates developing control of C1 structures. Shows strong receptive skills and fluent communication with minor grammatical errors in spontaneous speech. Midterm 98%.';
   } else if (s.name === 'Alexander Machugovskiy') {
     summary = 'Sasha shows strong B1+ speaking skills with good fluency. Midterm results show 84% completion with excellent attendance and engagement.';
   } else if (s.isGroup && s.midterm && s.midterm.status === 'completed') {
     const pct = Math.round((s.midterm.percentage||0)*100);
     const mot = s.midterm.details.motivation, ss = s.midterm.details.selfStudy;
     summary = `Group learner in ${s.groupName || 'Group1'} with ${s.teacher || 'Kevin'}. Current B1 midterm overall: ${pct}% across six skills. Motivation and self-study scored ${mot}/5 and ${ss}/5.`;
+  } else if (s.midterm && s.midterm.status === 'completed') {
+    const pct = Math.round((s.midterm.percentage||0)*100);
+    const lvlSummary = (s.midterm.details && s.midterm.details.cefrLevel) || (s.level ? s.level + ' in progress' : '');
+    summary = `${firstName} has completed the midterm assessment with an overall score of ${pct}%. Currently working within the ${lvlSummary || s.level + ' range'}, continuing toward the next CEFR level.`;
   } else if (s.progress) {
     summary = 'Currently progressing through the course. Midterm assessment will be available after completing approximately 60 academic hours.';
   } else {
